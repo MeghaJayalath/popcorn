@@ -61,17 +61,6 @@ function createWindow() {
 
     mainWindow.setMenuBarVisibility(false);
 
-    // Fix YouTube Restriction/Error 150/153 in Production
-    session.defaultSession.webRequest.onBeforeSendHeaders(
-        { urls: ['*://*.youtube.com/*', '*://*.googlevideo.com/*'] },
-        (details, callback) => {
-            details.requestHeaders['Referer'] = 'https://www.youtube.com/';
-            details.requestHeaders['Origin'] = 'https://www.youtube.com';
-            details.requestHeaders['User-Agent'] = CHROME_UA;
-            callback({ cancel: false, requestHeaders: details.requestHeaders });
-        }
-    );
-
     if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
         mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
         mainWindow.webContents.openDevTools();

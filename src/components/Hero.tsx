@@ -7,13 +7,10 @@ interface HeroProps {
     isPaused: boolean;
 }
 
-const Hero: React.FC<HeroProps> = ({ movies, onMoreInfo, isPaused }) => {
+const Hero: React.FC<HeroProps> = ({ movies, onMoreInfo }) => {
     const movie = movies[0];
-    const [trailerId, setTrailerId] = useState<string | null>(null);
     const [heroDetails, setHeroDetails] = useState<any>(null); // Store full details
-    const [isMuted, setIsMuted] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
-    const iframeRef = React.useRef<HTMLIFrameElement>(null);
     const parallaxRef = React.useRef<HTMLDivElement>(null);
 
     // Parallax Effect
@@ -34,7 +31,6 @@ const Hero: React.FC<HeroProps> = ({ movies, onMoreInfo, isPaused }) => {
     // Fetch Data (Only when movie changes)
     useEffect(() => {
         let active = true;
-        setTrailerId(null);
         setHeroDetails(null);
         setIsLoading(true);
 
@@ -49,14 +45,10 @@ const Hero: React.FC<HeroProps> = ({ movies, onMoreInfo, isPaused }) => {
 
                 if (!active) return;
 
-                // Fetch Trailer
-                const id = await window.electronAPI.getTrailer(movie.id);
-
                 // Fetch Details (for Logo & Description)
                 const details = await (window.electronAPI as any).getMovieDetails(movie.id);
 
                 if (active) {
-                    if (id) setTrailerId(id);
                     if (details) setHeroDetails(details);
                 }
             } catch (e) {
@@ -69,31 +61,9 @@ const Hero: React.FC<HeroProps> = ({ movies, onMoreInfo, isPaused }) => {
         return () => { active = false; };
     }, [movie]); // Removed isPaused
 
-    // Handle Pause/Play State (When side panel opens)
-    useEffect(() => {
-        if (iframeRef.current && iframeRef.current.contentWindow) {
-            // If paused, stop video. If not, play.
-            // Note: 'pauseVideo' freezes the frame.
-            const command = isPaused ? 'pauseVideo' : 'playVideo';
-            iframeRef.current.contentWindow.postMessage(JSON.stringify({
-                event: 'command',
-                func: command,
-                args: []
-            }), '*');
-        }
-    }, [isPaused, trailerId]);
 
-    const toggleMute = () => {
-        if (iframeRef.current && iframeRef.current.contentWindow) {
-            const action = isMuted ? 'unMute' : 'mute';
-            iframeRef.current.contentWindow.postMessage(JSON.stringify({
-                event: 'command',
-                func: action,
-                args: []
-            }), '*');
-            setIsMuted(!isMuted);
-        }
-    };
+
+    // toggleMute removed
 
     if (!movie) return null;
 
@@ -125,20 +95,7 @@ const Hero: React.FC<HeroProps> = ({ movies, onMoreInfo, isPaused }) => {
                 }} />
 
                 {/* Trailer (Overlay on top of image) */}
-                {trailerId && (
-                    <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
-                        <iframe
-                            ref={iframeRef}
-                            width="100%"
-                            height="100%"
-                            src={`https://www.youtube.com/embed/${trailerId}?autoplay=1&controls=0&mute=1&loop=1&playlist=${trailerId}&enablejsapi=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3`}
-                            title="Trailer"
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            style={{ objectFit: 'cover', width: '100%', height: '100%', pointerEvents: 'none', transform: 'scale(1.5)' }}
-                        />
-                    </div>
-                )}
+
             </div>
 
             {/* Dark Overlay Gradient (Lighter, Netflix-style) - Fixed, not parallaxed */}
@@ -241,37 +198,7 @@ const Hero: React.FC<HeroProps> = ({ movies, onMoreInfo, isPaused }) => {
                 alignItems: 'center',
                 zIndex: 20
             }}>
-                <button
-                    onClick={toggleMute}
-                    style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        border: '1px solid rgba(255,255,255,0.7)',
-                        backgroundColor: 'rgba(0,0,0,0.3)',
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: '1rem',
-                        cursor: 'pointer'
-                    }}
-                >
-                    {isMuted ? (
-                        // Muted Icon
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                            <line x1="23" y1="9" x2="17" y2="15" />
-                            <line x1="17" y1="9" x2="23" y2="15" />
-                        </svg>
-                    ) : (
-                        // Sound Icon
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
-                        </svg>
-                    )}
-                </button>
+
                 <div style={{
                     borderLeft: '3px solid #dcdcdc',
                     background: 'rgba(0,0,0,0.4)',

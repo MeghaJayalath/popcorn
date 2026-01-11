@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Movie } from '../data/movies';
-import ReactPlayer from 'react-player';
+
 
 interface DetailsPanelProps {
     movie: Movie | null;
@@ -12,11 +12,8 @@ interface DetailsPanelProps {
 }
 
 const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onStream, onWebStream, watchHistory }) => {
-    const [trailerId, setTrailerId] = useState<string | null>(null);
-    const [trailerError, setTrailerError] = useState(false);
     const [details, setDetails] = useState<any>(null);
     const [torrents, setTorrents] = useState<any[]>([]);
-    const [isMuted, setIsMuted] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
     const panelRef = useRef<HTMLDivElement>(null);
     const parallaxRef = useRef<HTMLDivElement>(null);
@@ -87,30 +84,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Listen for YouTube Player Errors (150, 152, etc)
-    useEffect(() => {
-        const handleMessage = (event: MessageEvent) => {
-            try {
-                // Determine if message is from our iframe? Hard to know strict origin sometimes, but we can parse.
-                if (typeof event.data === 'string') {
-                    const data = JSON.parse(event.data);
-                    // Check for standard YouTube error events
-                    if (data.event === 'onError') {
-                        setTrailerError(true);
-                    }
-                    // Sometimes errors (especially 150/152) come via infoDelivery
-                    if (data.event === 'infoDelivery' && data.info) {
-                        if (data.info.code === 150 || data.info.code === 152 ||
-                            data.info.error === 150 || data.info.error === 152) {
-                            setTrailerError(true);
-                        }
-                    }
-                }
-            } catch (e) { /* non-json message */ }
-        };
-        window.addEventListener('message', handleMessage);
-        return () => window.removeEventListener('message', handleMessage);
-    }, []);
+
 
     // Fetch Episodes when season changes
     useEffect(() => {
@@ -166,8 +140,6 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
 
     useEffect(() => {
         let active = true;
-        setTrailerId(null);
-        setTrailerError(false);
         setDetails(null);
         setTorrents([]);
         setIsLoading(true);
@@ -186,7 +158,6 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                 if (!active || !isOpen) return;
 
                 // Basic Fetch
-                const trailerPromise = window.electronAPI.getTrailer(movie.id);
                 const detailsPromise = (window.electronAPI as any).getMovieDetails(movie.id);
 
                 // Conditional Torrent Fetch
@@ -194,10 +165,9 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                     ? window.electronAPI.getTorrents(movie.title, movie.year)
                     : Promise.resolve([]);
 
-                const [id, meta, torrentList] = await Promise.all([trailerPromise, detailsPromise, torrentPromise]);
+                const [meta, torrentList] = await Promise.all([detailsPromise, torrentPromise]);
 
                 if (active) {
-                    if (id) setTrailerId(id);
                     if (meta && !meta.error) setDetails(meta);
                     if (torrentList) setTorrents(torrentList);
                 }
@@ -211,9 +181,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
         return () => { active = false; };
     }, [movie, isOpen]);
 
-    const toggleMute = () => {
-        setIsMuted(!isMuted);
-    };
+
 
     // Lock Body Scroll when panel is open
     useEffect(() => {
@@ -314,31 +282,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                         backgroundSize: 'cover', backgroundPosition: 'center'
                                     }} />
 
-                                    {/* Trailer (Overlay) */}
-                                    {trailerId && !trailerError && (
-                                        <div style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none' }}>
-                                            <div style={{ width: '100%', height: '100%', transform: 'scale(1.5)' }}>
-                                                {(() => {
-                                                    const Player = ReactPlayer as any;
-                                                    return <Player
-                                                        url={`https://www.youtube.com/watch?v=${trailerId}`}
-                                                        playing={true}
-                                                        muted={isMuted}
-                                                        loop={true}
-                                                        controls={false}
-                                                        width="100%"
-                                                        height="100%"
-                                                        config={{
-                                                            youtube: {
-                                                                playerVars: { showinfo: 0, controls: 0, disablekb: 1, modestbranding: 1, rel: 0, iv_load_policy: 3, fs: 0, origin: 'https://www.youtube.com' }
-                                                            }
-                                                        }}
-                                                        onError={() => setTrailerError(true)}
-                                                    />
-                                                })()}
-                                            </div>
-                                        </div>
-                                    )}
+
                                 </div>
 
                                 {/* Gradient Overlay */}
@@ -380,22 +324,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                     </h1>
                                 )}
 
-                                {/* Mute Toggle Small */}
-                                <button
-                                    onClick={toggleMute}
-                                    style={{
-                                        width: '40px', height: '40px', borderRadius: '50%',
-                                        border: '1px solid rgba(255,255,255,0.4)', background: 'rgba(0,0,0,0.6)',
-                                        color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                                        flexShrink: 0
-                                    }}
-                                >
-                                    {isMuted ? (
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 5L6 9H2v6h4l5 4V5z" /><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" /></svg>
-                                    ) : (
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" /></svg>
-                                    )}
-                                </button>
+
                             </div>
                         </div>
 
