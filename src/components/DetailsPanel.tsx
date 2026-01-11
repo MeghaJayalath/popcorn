@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Movie } from '../data/movies';
+import ReactPlayer from 'react-player';
 
 interface DetailsPanelProps {
     movie: Movie | null;
@@ -17,7 +18,6 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
     const [torrents, setTorrents] = useState<any[]>([]);
     const [isMuted, setIsMuted] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
-    const iframeRef = useRef<HTMLIFrameElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
     const parallaxRef = useRef<HTMLDivElement>(null);
 
@@ -212,15 +212,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
     }, [movie, isOpen]);
 
     const toggleMute = () => {
-        if (iframeRef.current && iframeRef.current.contentWindow) {
-            const action = isMuted ? 'unMute' : 'mute';
-            iframeRef.current.contentWindow.postMessage(JSON.stringify({
-                event: 'command',
-                func: action,
-                args: []
-            }), '*');
-            setIsMuted(!isMuted);
-        }
+        setIsMuted(!isMuted);
     };
 
     // Lock Body Scroll when panel is open
@@ -324,16 +316,27 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
 
                                     {/* Trailer (Overlay) */}
                                     {trailerId && !trailerError && (
-                                        <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
-                                            <iframe
-                                                ref={iframeRef}
-                                                width="100%" height="100%"
-                                                src={`https://www.youtube.com/embed/${trailerId}?autoplay=1&controls=0&mute=1&loop=1&playlist=${trailerId}&enablejsapi=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&fs=0`}
-                                                title="Trailer"
-                                                frameBorder="0"
-                                                style={{ objectFit: 'cover', width: '100%', height: '100%', pointerEvents: 'none', transform: 'scale(1.5)' }}
-                                                onError={() => setTrailerError(true)}
-                                            />
+                                        <div style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none' }}>
+                                            <div style={{ width: '100%', height: '100%', transform: 'scale(1.5)' }}>
+                                                {(() => {
+                                                    const Player = ReactPlayer as any;
+                                                    return <Player
+                                                        url={`https://www.youtube.com/watch?v=${trailerId}`}
+                                                        playing={true}
+                                                        muted={isMuted}
+                                                        loop={true}
+                                                        controls={false}
+                                                        width="100%"
+                                                        height="100%"
+                                                        config={{
+                                                            youtube: {
+                                                                playerVars: { showinfo: 0, controls: 0, disablekb: 1, modestbranding: 1, rel: 0, iv_load_policy: 3, fs: 0, origin: 'https://www.youtube.com' }
+                                                            }
+                                                        }}
+                                                        onError={() => setTrailerError(true)}
+                                                    />
+                                                })()}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -590,14 +593,19 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                             <h3 style={{ fontSize: '1.1rem', color: '#eee', margin: 0 }}>Available Streams</h3>
                                             {onWebStream && (
                                                 <button
-                                                    onClick={() => onWebStream(movie.id)}
+                                                    onClick={() => !movie.inCinemas && onWebStream(movie.id)}
+                                                    disabled={!!movie.inCinemas}
                                                     style={{
-                                                        background: 'rgba(255,255,255,0.1)', border: '1px solid #444', color: '#ddd',
+                                                        background: movie.inCinemas ? '#333' : '#e50914',
+                                                        border: 'none', color: 'white',
                                                         padding: '6px 12px', borderRadius: '4px', fontSize: '0.85rem',
-                                                        cursor: 'pointer', fontWeight: 500
+                                                        cursor: movie.inCinemas ? 'not-allowed' : 'pointer',
+                                                        fontWeight: 600,
+                                                        opacity: movie.inCinemas ? 0.5 : 1
                                                     }}
+                                                    title={movie.inCinemas ? "Not available while in cinemas" : ""}
                                                 >
-                                                    Open Web Player
+                                                    Play via Web (Fast)
                                                 </button>
                                             )}
                                         </div>

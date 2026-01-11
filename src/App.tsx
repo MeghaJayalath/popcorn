@@ -15,6 +15,7 @@ interface CategorySection {
 // ... (imports remain similar, will need DetailsPanel)
 import DetailsPanel from './components/DetailsPanel';
 import Top10Card from './components/Top10Card';
+import SplashScreen from './components/SplashScreen';
 
 function App() {
   const [categories, setCategories] = useState<CategorySection[]>([]);
@@ -23,6 +24,10 @@ function App() {
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+
+  // Splash Screen State
+  const [showSplash, setShowSplash] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [webStreamParams, setWebStreamParams] = useState<{ tmdbId: string, season?: number, episode?: number } | null>(null);
@@ -87,6 +92,8 @@ function App() {
 
       } catch (e) {
         console.error("Failed to fetch content:", e);
+      } finally {
+        setDataLoaded(true);
       }
     }
     fetchContent();
@@ -309,6 +316,13 @@ function App() {
 
   return (
     <div className="App">
+      {showSplash && (
+        <SplashScreen
+          isReady={dataLoaded}
+          onComplete={() => setShowSplash(false)}
+        />
+      )}
+
       {/* ... QualityModal and Loading Overlay ... */}
 
 
@@ -452,11 +466,7 @@ function App() {
                   </div>
                 </div>
               )) : (
-                !loading && (
-                  <div style={{ padding: '100px', textAlign: 'center' }}>
-                    <h2>Loading Movies...</h2>
-                  </div>
-                )
+                !loading && <div style={{ minHeight: '50vh' }}></div>
               )}
             </div>
           </>

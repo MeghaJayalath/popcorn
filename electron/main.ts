@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, session } from 'electron';
 import path from 'path';
 import WebTorrent from 'webtorrent';
 // import { getTrendingMovies } from './services/imdb';
@@ -14,6 +14,10 @@ import {
     getSeasonDetailsTMDB
 } from './services/tmdb';
 import { getBestMagnet, getMovieTorrents, getEpisodeTorrents } from './services/torrent';
+
+// Spoof Chrome User Agent for YouTube
+const CHROME_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+app.userAgentFallback = CHROME_UA;
 
 // Define the absolute path to the HTML file or URL
 const MAIN_WINDOW_VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
@@ -54,6 +58,19 @@ function createWindow() {
         backgroundColor: '#000000',
         autoHideMenuBar: true,
     });
+
+    mainWindow.setMenuBarVisibility(false);
+
+    // Fix YouTube Restriction/Error 150/153 in Production
+    session.defaultSession.webRequest.onBeforeSendHeaders(
+        { urls: ['*://*.youtube.com/*', '*://*.googlevideo.com/*'] },
+        (details, callback) => {
+            details.requestHeaders['Referer'] = 'https://www.youtube.com/';
+            details.requestHeaders['Origin'] = 'https://www.youtube.com';
+            details.requestHeaders['User-Agent'] = CHROME_UA;
+            callback({ cancel: false, requestHeaders: details.requestHeaders });
+        }
+    );
 
     if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
         mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
