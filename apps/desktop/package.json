@@ -1,7 +1,7 @@
 {
   "name": "@popcorn/desktop",
   "private": true,
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Stream movies and TV shows",
   "author": "Popcorn Team",
   "main": "dist-electron/main.js",
@@ -61,7 +61,14 @@
       "dist-electron/**/*",
       "package.json",
       "public/**/*",
-      ".env"
+      ".env",
+      {
+        "from": "../../node_modules",
+        "to": "node_modules",
+        "filter": [
+          "**/*"
+        ]
+      }
     ],
     "win": {
       "target": "nsis",
