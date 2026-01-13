@@ -1,17 +1,72 @@
 {
-  "name": "popcorn-monorepo",
+  "name": "popcorn",
   "private": true,
-  "workspaces": [
-    "apps/*"
-  ],
+  "version": "1.0.5",
+  "main": "dist-electron/main.js",
   "scripts": {
-    "dev:desktop": "npm run dev -w apps/desktop",
-    "dev:web": "npm run dev -w apps/web",
-    "build:desktop": "npm run build -w apps/desktop",
-    "build:web": "npm run build -w apps/web",
-    "lint": "npm run lint -w apps/desktop && npm run lint -w apps/web"
+    "dev": "concurrently -k \"vite\" \"npm run dev:electron\"",
+    "dev:electron": "tsc -p tsconfig.electron.json && wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
+    "build": "tsc -b && vite build && npm run build:electron && electron-builder",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "cheerio": "^1.1.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-player": "^3.4.0",
+    "torrent-search-api": "^2.1.4",
+    "webtorrent": "^1.9.7"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@types/torrent-search-api": "^2.0.3",
+    "@types/webtorrent": "^0.110.1",
+    "@vitejs/plugin-react": "^5.1.1",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^7.2.4",
+    "wait-on": "^9.0.3"
+  },
+  "build": {
+    "appId": "com.popcorn.app",
+    "productName": "Popcorn",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json",
+      "public/**/*",
+      ".env"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/icon.png",
+      "category": "public.app-category.entertainment"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
