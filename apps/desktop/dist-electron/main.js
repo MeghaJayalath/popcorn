@@ -84,6 +84,9 @@ function createWindow() {
 //     initScraper();
 // });
 // IPC Handlers
+electron_1.ipcMain.handle('open-external', async (_, url) => {
+    return await electron_1.shell.openExternal(url);
+});
 electron_1.ipcMain.handle('get-trending', async () => {
     return await (0, tmdb_1.getTrendingTMDB)();
 });
