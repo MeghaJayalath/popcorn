@@ -103,8 +103,8 @@ electron_1.ipcMain.handle('get-latest', async () => {
 electron_1.ipcMain.handle('get-top-10', async () => {
     return await (0, tmdb_1.getPopularTMDB)();
 });
-electron_1.ipcMain.handle('get-movie-details', async (event, imdbId) => {
-    return await (0, tmdb_1.getMovieDetailsTMDB)(imdbId);
+electron_1.ipcMain.handle('get-movie-details', async (event, id, type) => {
+    return await (0, tmdb_1.getMovieDetailsTMDB)(id, type);
 });
 electron_1.ipcMain.handle('get-trailer', async (event, id) => {
     return await (0, tmdb_1.getTrailerTMDB)(id);

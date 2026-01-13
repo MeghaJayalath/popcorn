@@ -158,7 +158,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                 if (!active || !isOpen) return;
 
                 // Basic Fetch
-                const detailsPromise = (window.electronAPI as any).getMovieDetails(movie.id);
+                const detailsPromise = (window.electronAPI as any).getMovieDetails(movie.id, movie.type);
 
                 // Conditional Torrent Fetch
                 const torrentPromise = (movie.type !== 'tv')

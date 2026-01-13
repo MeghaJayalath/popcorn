@@ -202,70 +202,76 @@ async function getMoviesByGenre(genreName) {
         return [];
     }
 }
-async function getMovieDetailsTMDB(id) {
-    try {
-        const res = await axios_1.default.get(`${BASE_URL}/movie/${id}`, {
-            params: {
-                api_key: TMDB_API_KEY,
-                append_to_response: 'credits,videos,images',
-                include_image_language: 'en,null' // Get English or no-text logos
-            }
-        });
-        const m = res.data;
-        // Extract Logo
-        let logoUrl = null;
-        if (m.images && m.images.logos && m.images.logos.length > 0) {
-            // Find best png. specific to English or no language
-            const logo = m.images.logos.find((l) => l.iso_639_1 === 'en') || m.images.logos[0];
-            if (logo)
-                logoUrl = `${IMAGE_BASE}${logo.file_path}`;
-        }
-        // Extract Director/Cast
-        const director = m.credits?.crew?.find((c) => c.job === 'Director')?.name || 'Unknown';
-        const cast = m.credits?.cast?.slice(0, 5).map((c) => c.name) || [];
-        const genres = m.genres?.map((g) => g.name) || [];
-        return {
-            ...formatMovie(m),
-            director,
-            cast,
-            genres,
-            logoUrl,
-            runtime: m.runtime ? `${Math.floor(m.runtime / 60)}h ${m.runtime % 60}m` : '',
-            mpaa: m.adult ? 'R' : 'PG-13', // Simplified (TMDB doesn't give MPAA easily without release_dates)
-        };
-    }
-    catch (e) {
-        // Retry for TV Show if Movie fails
+async function getMovieDetailsTMDB(id, type) {
+    // 1. Try Movie (unless explicitly TV)
+    if (type !== 'tv') {
         try {
-            const resTv = await axios_1.default.get(`${BASE_URL}/tv/${id}`, {
+            const res = await axios_1.default.get(`${BASE_URL}/movie/${id}`, {
                 params: {
                     api_key: TMDB_API_KEY,
                     append_to_response: 'credits,videos,images',
                     include_image_language: 'en,null'
                 }
             });
-            const m = resTv.data;
+            const m = res.data;
             let logoUrl = null;
             if (m.images && m.images.logos && m.images.logos.length > 0) {
                 const logo = m.images.logos.find((l) => l.iso_639_1 === 'en') || m.images.logos[0];
                 if (logo)
                     logoUrl = `${IMAGE_BASE}${logo.file_path}`;
             }
+            const director = m.credits?.crew?.find((c) => c.job === 'Director')?.name || 'Unknown';
             const cast = m.credits?.cast?.slice(0, 5).map((c) => c.name) || [];
             const genres = m.genres?.map((g) => g.name) || [];
             return {
                 ...formatMovie(m),
+                director,
                 cast,
                 genres,
                 logoUrl,
-                runtime: m.episode_run_time?.[0] ? `${m.episode_run_time[0]}m` : '',
-                seasons: m.seasons || []
+                runtime: m.runtime ? `${Math.floor(m.runtime / 60)}h ${m.runtime % 60}m` : '',
+                mpaa: m.adult ? 'R' : 'PG-13',
             };
         }
-        catch (err2) {
-            console.error("TMDB Details Error:", e);
-            return { error: 'Failed to load details' };
+        catch (e) {
+            // If explicitly movie, fail here
+            if (type === 'movie') {
+                console.error("TMDB Movie Details Error:", e);
+                return { error: 'Failed to load details' };
+            }
+            // Otherwise, continue to TV fallback
         }
+    }
+    // 2. Try TV (Fallback or Explicit)
+    try {
+        const resTv = await axios_1.default.get(`${BASE_URL}/tv/${id}`, {
+            params: {
+                api_key: TMDB_API_KEY,
+                append_to_response: 'credits,videos,images',
+                include_image_language: 'en,null'
+            }
+        });
+        const m = resTv.data;
+        let logoUrl = null;
+        if (m.images && m.images.logos && m.images.logos.length > 0) {
+            const logo = m.images.logos.find((l) => l.iso_639_1 === 'en') || m.images.logos[0];
+            if (logo)
+                logoUrl = `${IMAGE_BASE}${logo.file_path}`;
+        }
+        const cast = m.credits?.cast?.slice(0, 5).map((c) => c.name) || [];
+        const genres = m.genres?.map((g) => g.name) || [];
+        return {
+            ...formatMovie(m),
+            cast,
+            genres,
+            logoUrl,
+            runtime: m.episode_run_time?.[0] ? `${m.episode_run_time[0]}m` : '',
+            seasons: m.seasons || []
+        };
+    }
+    catch (err2) {
+        console.error("TMDB Details Error:", err2);
+        return { error: 'Failed to load details' };
     }
 }
 async function getSeasonDetailsTMDB(tvId, seasonNumber) {

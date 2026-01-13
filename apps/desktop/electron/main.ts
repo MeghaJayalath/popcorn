@@ -129,8 +129,8 @@ ipcMain.handle('get-top-10', async () => {
 
 
 
-ipcMain.handle('get-movie-details', async (event, imdbId) => {
-    return await getMovieDetailsTMDB(imdbId);
+ipcMain.handle('get-movie-details', async (event, id, type) => {
+    return await getMovieDetailsTMDB(id, type);
 });
 
 ipcMain.handle('get-trailer', async (event, id) => {

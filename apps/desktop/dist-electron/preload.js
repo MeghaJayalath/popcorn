@@ -12,7 +12,7 @@ electron_1.contextBridge.exposeInMainWorld('electronAPI', {
     getCategory: (genre) => electron_1.ipcRenderer.invoke('get-category', genre),
     getTorrents: (title, year) => electron_1.ipcRenderer.invoke('get-torrents', title, year),
     getMagnet: (title, year) => electron_1.ipcRenderer.invoke('get-magnet', title, year),
-    getMovieDetails: (id) => electron_1.ipcRenderer.invoke('get-movie-details', id),
+    getMovieDetails: (id, type) => electron_1.ipcRenderer.invoke('get-movie-details', id, type),
     getSeasonDetails: (tvId, seasonNumber) => electron_1.ipcRenderer.invoke('get-season-details', tvId, seasonNumber),
     getEpisodeTorrents: (title, season, episode) => electron_1.ipcRenderer.invoke('get-episode-torrents', title, season, episode),
     getWatchProgress: (tmdbId, season, episode) => electron_1.ipcRenderer.invoke('get-watch-progress', tmdbId, season, episode),

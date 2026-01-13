@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getCategory: (genre: string) => ipcRenderer.invoke('get-category', genre),
     getTorrents: (title: string, year: number) => ipcRenderer.invoke('get-torrents', title, year),
     getMagnet: (title: string, year: number) => ipcRenderer.invoke('get-magnet', title, year),
-    getMovieDetails: (id: string) => ipcRenderer.invoke('get-movie-details', id),
+    getMovieDetails: (id: string, type?: string) => ipcRenderer.invoke('get-movie-details', id, type),
     getSeasonDetails: (tvId: string, seasonNumber: number) => ipcRenderer.invoke('get-season-details', tvId, seasonNumber),
     getEpisodeTorrents: (title: string, season: number, episode: number) => ipcRenderer.invoke('get-episode-torrents', title, season, episode),
     getWatchProgress: (tmdbId: string, season?: number, episode?: number) => ipcRenderer.invoke('get-watch-progress', tmdbId, season, episode),
