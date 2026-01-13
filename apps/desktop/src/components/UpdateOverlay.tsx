@@ -26,8 +26,10 @@ const UpdateOverlay: React.FC = () => {
 
             <button
                 onClick={() => {
-                    // Direct user to download page - replace with your actual URL
-                    require('electron').shell.openExternal('https://popcorn-app.com'); // Or your repo releases page
+                    // Direct user to download page
+                    if (window.electronAPI) {
+                        window.electronAPI.openExternal('https://popcorn-app.com');
+                    }
                 }}
                 style={{
                     padding: '12px 30px',

@@ -17,5 +17,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getWatchProgress: (tmdbId: string, season?: number, episode?: number) => ipcRenderer.invoke('get-watch-progress', tmdbId, season, episode),
     updateWatchProgress: (tmdbId: string, progress: number, duration: number, season?: number, episode?: number, magnet?: string) => ipcRenderer.invoke('update-watch-progress', tmdbId, progress, duration, season, episode, magnet),
     removeWatchProgress: (tmdbId: string) => ipcRenderer.invoke('remove-watch-progress', tmdbId),
-    getWatchHistory: () => ipcRenderer.invoke('get-watch-history')
+    getWatchHistory: () => ipcRenderer.invoke('get-watch-history'),
+    openExternal: (url: string) => ipcRenderer.invoke('open-external', url)
 });

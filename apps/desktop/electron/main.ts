@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, session } from 'electron';
+import { app, BrowserWindow, ipcMain, session, shell } from 'electron';
 import path from 'path';
 import WebTorrent from 'webtorrent';
 // import { getTrendingMovies } from './services/imdb';
@@ -99,6 +99,10 @@ function createWindow() {
 // });
 
 // IPC Handlers
+ipcMain.handle('open-external', async (_, url) => {
+    return await shell.openExternal(url);
+});
+
 ipcMain.handle('get-trending', async () => {
     return await getTrendingTMDB();
 });
