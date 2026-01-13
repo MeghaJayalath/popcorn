@@ -1,4 +1,13 @@
 import { useState, useEffect } from 'react';
+import { fetchAndActivate, getValue } from "firebase/remote-config";
+import { logEvent } from "firebase/analytics";
+import semver from "semver";
+
+import { analytics, remoteConfig } from "./firebase";
+import packageJson from "../package.json";
+import UpdateOverlay from "./components/UpdateOverlay";
+import MaintenanceOverlay from "./components/MaintenanceOverlay";
+
 import Hero from './components/Hero';
 import VideoPlayer from './components/VideoPlayer';
 import WebPlayer from './components/WebPlayer';
@@ -18,6 +27,11 @@ import Top10Card from './components/Top10Card';
 import SplashScreen from './components/SplashScreen';
 
 function App() {
+  // Remote Config State
+  const [isUpdateRequired, setIsUpdateRequired] = useState(false);
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState("");
+
   const [categories, setCategories] = useState<CategorySection[]>([]);
   const [heroMovies, setHeroMovies] = useState<Movie[]>([]);
 
@@ -41,6 +55,44 @@ function App() {
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [watchHistory, setWatchHistory] = useState<any>(null);
+
+  // Initialize Firebase & Check Config
+  useEffect(() => {
+    // 1. Log App Open
+    logEvent(analytics, 'app_open');
+
+    // 2. Fetch Remote Config
+    const checkConfig = async () => {
+      try {
+        await fetchAndActivate(remoteConfig);
+
+        // Check Maintenance
+        const maintenance = getValue(remoteConfig, "maintenance_mode_enabled").asBoolean();
+        const msg = getValue(remoteConfig, "maintenance_message").asString();
+
+        if (maintenance) {
+          setIsMaintenanceMode(true);
+          setMaintenanceMessage(msg);
+          // If maintenance is on, we can optionally stop loading other data, 
+          // but usually it's better to just overlay.
+        }
+
+        // Check Version
+        const minVersion = getValue(remoteConfig, "min_required_version").asString();
+        const currentVersion = packageJson.version;
+
+        if (semver.lt(currentVersion, minVersion)) {
+          console.warn(`Update required! Current: ${currentVersion}, Min: ${minVersion}`);
+          setIsUpdateRequired(true);
+        }
+
+      } catch (err) {
+        console.error("Failed to fetch remote config:", err);
+      }
+    };
+
+    checkConfig();
+  }, []);
 
   useEffect(() => {
     async function fetchContent() {
@@ -316,7 +368,13 @@ function App() {
 
   return (
     <div className="App">
-      {showSplash && (
+      {/* 1. Priority: Update Overlay */}
+      {isUpdateRequired && <UpdateOverlay />}
+
+      {/* 2. Priority: Maintenance Overlay */}
+      {isMaintenanceMode && <MaintenanceOverlay message={maintenanceMessage} />}
+
+      {showSplash && !isUpdateRequired && !isMaintenanceMode && (
         <SplashScreen
           isReady={dataLoaded}
           onComplete={() => setShowSplash(false)}
