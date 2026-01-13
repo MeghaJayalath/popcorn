@@ -25,7 +25,7 @@ export const remoteConfig = getRemoteConfig(app);
 remoteConfig.defaultConfig = {
     min_required_version: "1.0.0",
     maintenance_mode_enabled: false,
-    maintenance_message: "We are currently performing scheduled maintenance. Please check back later."
+    maintenance_message: "We are currently performing maintenance. Please check back later."
 };
 
 // Fetch every 1 second in Dev, every 1 hour (3600000 ms) in Prod

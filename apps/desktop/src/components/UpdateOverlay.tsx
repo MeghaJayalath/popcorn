@@ -1,6 +1,12 @@
 import React from 'react';
 
-const UpdateOverlay: React.FC = () => {
+interface UpdateOverlayProps {
+    message?: string;
+}
+
+const UpdateOverlay: React.FC<UpdateOverlayProps> = ({ message }) => {
+    const defaultMessage = "A new version of Popcorn is available. This update includes critical fixes and new features. Please update to continue watching.";
+
     return (
         <div style={{
             position: 'fixed',
@@ -20,13 +26,11 @@ const UpdateOverlay: React.FC = () => {
         }}>
             <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: '#e50914' }}>Update Required</h1>
             <p style={{ fontSize: '1.2rem', marginBottom: '2rem', maxWidth: '600px' }}>
-                A new version of Popcorn is available. This update includes critical fixes and new features.
-                Please update to continue watching.
+                {message || defaultMessage}
             </p>
 
-            <button
+            {/* <button
                 onClick={() => {
-                    // Direct user to download page
                     if (window.electronAPI) {
                         window.electronAPI.openExternal('https://popcorn-app.com');
                     }
@@ -43,7 +47,7 @@ const UpdateOverlay: React.FC = () => {
                 }}
             >
                 Download Update
-            </button>
+            </button> */}
         </div>
     );
 };

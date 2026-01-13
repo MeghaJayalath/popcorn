@@ -31,6 +31,7 @@ function App() {
   const [isUpdateRequired, setIsUpdateRequired] = useState(false);
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState("");
+  const [updateMessage, setUpdateMessage] = useState("");
 
   const [categories, setCategories] = useState<CategorySection[]>([]);
   const [heroMovies, setHeroMovies] = useState<Movie[]>([]);
@@ -82,6 +83,8 @@ function App() {
         const currentVersion = packageJson.version;
 
         if (semver.lt(currentVersion, minVersion)) {
+          const updateMsg = getValue(remoteConfig, "update_required_message").asString();
+          setUpdateMessage(updateMsg);
           console.warn(`Update required! Current: ${currentVersion}, Min: ${minVersion}`);
           setIsUpdateRequired(true);
         }
@@ -369,7 +372,7 @@ function App() {
   return (
     <div className="App">
       {/* 1. Priority: Update Overlay */}
-      {isUpdateRequired && <UpdateOverlay />}
+      {isUpdateRequired && <UpdateOverlay message={updateMessage} />}
 
       {/* 2. Priority: Maintenance Overlay */}
       {isMaintenanceMode && <MaintenanceOverlay message={maintenanceMessage} />}

@@ -177,7 +177,7 @@ const Hero: React.FC<HeroProps> = ({ movies, onMoreInfo }) => {
                                 }}
                             >
                                 {/* Info Icon SVG */}
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ stroke: 'currentColor', strokeWidth: 2 }}>
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
                                     <circle cx="12" cy="12" r="10" />
                                     <path d="M12 16v-4" />
                                     <path d="M12 8h.01" />
@@ -207,7 +207,7 @@ const Hero: React.FC<HeroProps> = ({ movies, onMoreInfo }) => {
                     fontSize: '1rem',
                     fontWeight: 'bold'
                 }}>
-                    13+
+                    {heroDetails?.certification || heroDetails?.mpaa || 'PG-13'}
                 </div>
             </div>
         </div>

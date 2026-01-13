@@ -172,7 +172,7 @@ export async function getMovieDetailsTMDB(id: string, type?: string) {
             const res = await axios.get(`${BASE_URL}/movie/${id}`, {
                 params: {
                     api_key: TMDB_API_KEY,
-                    append_to_response: 'credits,videos,images',
+                    append_to_response: 'credits,videos,images,release_dates',
                     include_image_language: 'en,null'
                 }
             });
@@ -182,6 +182,15 @@ export async function getMovieDetailsTMDB(id: string, type?: string) {
             if (m.images && m.images.logos && m.images.logos.length > 0) {
                 const logo = m.images.logos.find((l: any) => l.iso_639_1 === 'en') || m.images.logos[0];
                 if (logo) logoUrl = `${IMAGE_BASE}${logo.file_path}`;
+            }
+
+            // Extract Certification (US)
+            let certification = 'PG-13'; // Default
+            const releaseDates = m.release_dates?.results?.find((r: any) => r.iso_3166_1 === 'US');
+            if (releaseDates && releaseDates.release_dates) {
+                // Find the first non-empty certification
+                const cert = releaseDates.release_dates.find((d: any) => d.certification);
+                if (cert) certification = cert.certification;
             }
 
             const director = m.credits?.crew?.find((c: any) => c.job === 'Director')?.name || 'Unknown';
@@ -195,7 +204,8 @@ export async function getMovieDetailsTMDB(id: string, type?: string) {
                 genres,
                 logoUrl,
                 runtime: m.runtime ? `${Math.floor(m.runtime / 60)}h ${m.runtime % 60}m` : '',
-                mpaa: m.adult ? 'R' : 'PG-13',
+                mpaa: m.adult ? 'R' : certification,
+                certification
             };
         } catch (e) {
             // If explicitly movie, fail here
@@ -212,7 +222,7 @@ export async function getMovieDetailsTMDB(id: string, type?: string) {
         const resTv = await axios.get(`${BASE_URL}/tv/${id}`, {
             params: {
                 api_key: TMDB_API_KEY,
-                append_to_response: 'credits,videos,images',
+                append_to_response: 'credits,videos,images,content_ratings',
                 include_image_language: 'en,null'
             }
         });
@@ -223,6 +233,11 @@ export async function getMovieDetailsTMDB(id: string, type?: string) {
             if (logo) logoUrl = `${IMAGE_BASE}${logo.file_path}`;
         }
 
+        // Extract TV Rating
+        let certification = 'TV-14';
+        const ratings = m.content_ratings?.results?.find((r: any) => r.iso_3166_1 === 'US');
+        if (ratings) certification = ratings.rating;
+
         const cast = m.credits?.cast?.slice(0, 5).map((c: any) => c.name) || [];
         const genres = m.genres?.map((g: any) => g.name) || [];
         return {
@@ -231,7 +246,8 @@ export async function getMovieDetailsTMDB(id: string, type?: string) {
             genres,
             logoUrl,
             runtime: m.episode_run_time?.[0] ? `${m.episode_run_time[0]}m` : '',
-            seasons: m.seasons || []
+            seasons: m.seasons || [],
+            certification
         };
     } catch (err2) {
         console.error("TMDB Details Error:", err2);

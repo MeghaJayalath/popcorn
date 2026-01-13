@@ -326,6 +326,21 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
 
 
                             </div>
+
+                            <div style={{
+                                position: 'absolute',
+                                right: 0,
+                                bottom: '25px',
+                                borderLeft: '3px solid #dcdcdc',
+                                background: 'rgba(0,0,0,0.4)',
+                                padding: '0.4rem 1rem',
+                                color: 'white',
+                                fontSize: '1rem',
+                                fontWeight: 'bold',
+                                zIndex: 20
+                            }}>
+                                {details?.certification || details?.mpaa || 'PG-13'}
+                            </div>
                         </div>
 
                         {/* Info Section */}
