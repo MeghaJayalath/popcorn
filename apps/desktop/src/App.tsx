@@ -254,7 +254,7 @@ function App() {
       rating: s.rating || 'N/A',
       voteCount: s.voteCount,
       description: "",
-      backdropUrl: s.image,
+      backdropUrl: s.backdrop || s.image,
       inCinemas: s.inCinemas,
       type: s.type,
     }));
