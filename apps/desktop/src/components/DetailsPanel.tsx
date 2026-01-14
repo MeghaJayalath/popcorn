@@ -256,7 +256,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                     }}>
                         <div style={{
                             width: '40px', height: '40px',
-                            border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#e50914',
+                            border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary-color)',
                             borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '1rem'
                         }} />
                         <p>Loading details...</p>
@@ -403,8 +403,8 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                                                     }}
                                                                     style={{
                                                                         display: 'block', width: '100%', textAlign: 'left',
-                                                                        padding: '12px 16px', background: selectedSeason === s.season_number ? 'rgba(229, 9, 20, 0.1)' : 'transparent',
-                                                                        color: selectedSeason === s.season_number ? '#e50914' : '#ddd',
+                                                                        padding: '12px 16px', background: selectedSeason === s.season_number ? 'rgba(181, 150, 110, 0.1)' : 'transparent',
+                                                                        color: selectedSeason === s.season_number ? 'var(--primary-color)' : '#ddd',
                                                                         border: 'none', cursor: 'pointer', fontSize: '0.9rem',
                                                                         borderBottom: '1px solid #2a2a2a', transition: 'background 0.2s'
                                                                     }}
@@ -444,7 +444,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                                                     }}>
                                                                         <div style={{
                                                                             height: '100%', width: `${getEpisodeProgress(selectedSeason, ep.episode_number)}%`,
-                                                                            background: '#e50914'
+                                                                            background: 'var(--primary-color)'
                                                                         }} />
                                                                     </div>
                                                                 )}
@@ -479,7 +479,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                                                         <button
                                                                             onClick={() => onWebStream(movie.id, selectedSeason, ep.episode_number)}
                                                                             style={{
-                                                                                background: '#e50914', border: 'none', color: 'white',
+                                                                                background: 'var(--primary-color)', border: 'none', color: 'black',
                                                                                 padding: '4px 10px', borderRadius: '4px', fontSize: '0.8rem',
                                                                                 cursor: 'pointer', fontWeight: 600
                                                                             }}
@@ -490,7 +490,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                                                 </div>
                                                                 {loadingEpisodeTorrents ? (
                                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#777' }}>
-                                                                        <div style={{ width: '16px', height: '16px', border: '2px solid #555', borderTopColor: '#e50914', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                                                                        <div style={{ width: '16px', height: '16px', border: '2px solid #555', borderTopColor: 'var(--primary-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                                                                         <span>Searching high-quality streams...</span>
                                                                     </div>
                                                                 ) : (
@@ -516,7 +516,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                                                                     {getEpisodeProgress(selectedSeason, ep.episode_number, t.magnet) > 0 && (
                                                                                         <div style={{
                                                                                             position: 'absolute', bottom: 0, left: 0, height: '4px',
-                                                                                            background: '#e50914', width: `${getEpisodeProgress(selectedSeason, ep.episode_number, t.magnet)}%`
+                                                                                            background: 'var(--primary-color)', width: `${getEpisodeProgress(selectedSeason, ep.episode_number, t.magnet)}%`
                                                                                         }} />
                                                                                     )}
                                                                                 </button>
@@ -540,8 +540,8 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                                     onClick={() => !movie.inCinemas && onWebStream(movie.id)}
                                                     disabled={!!movie.inCinemas}
                                                     style={{
-                                                        background: movie.inCinemas ? '#333' : '#e50914',
-                                                        border: 'none', color: 'white',
+                                                        background: movie.inCinemas ? '#333' : 'var(--primary-color)',
+                                                        border: 'none', color: 'black',
                                                         padding: '6px 12px', borderRadius: '4px', fontSize: '0.85rem',
                                                         cursor: movie.inCinemas ? 'not-allowed' : 'pointer',
                                                         fontWeight: 600,
@@ -555,8 +555,8 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                         </div>
                                         {movie.inCinemas ? (
                                             <div style={{
-                                                padding: '2rem', border: '1px border #333', background: 'rgba(255,0,0,0.1)',
-                                                borderRadius: '8px', textAlign: 'center', color: '#ffaaaa'
+                                                padding: '2rem', border: '1px border #333', background: 'rgba(181,150,110,0.1)',
+                                                borderRadius: '8px', textAlign: 'center', color: '#FDEDAD'
                                             }}>
                                                 <h4 style={{ marginBottom: '0.5rem' }}>Only In Theaters</h4>
                                                 <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
@@ -587,7 +587,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                                             {getMovieProgress(t.magnet) > 0 && (
                                                                 <div style={{
                                                                     position: 'absolute', bottom: 0, left: 0, height: '4px',
-                                                                    background: '#e50914', width: `${getMovieProgress(t.magnet)}%`
+                                                                    background: 'var(--primary-color)', width: `${getMovieProgress(t.magnet)}%`
                                                                 }} />
                                                             )}
                                                         </button>

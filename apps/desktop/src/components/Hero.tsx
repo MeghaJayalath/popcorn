@@ -109,7 +109,7 @@ const Hero: React.FC<HeroProps> = ({ movies, onMoreInfo }) => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: 'rgba(255,255,255,0.7)' }}>
                         <div style={{
                             width: '30px', height: '30px',
-                            border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#e50914',
+                            border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary-color)',
                             borderRadius: '50%', animation: 'spin 0.8s linear infinite'
                         }} />
                         <span style={{ fontSize: '1.2rem' }}>Loading preview...</span>

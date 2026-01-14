@@ -24,7 +24,7 @@ const UpdateOverlay: React.FC<UpdateOverlayProps> = ({ message }) => {
             padding: '2rem',
             textAlign: 'center'
         }}>
-            <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: '#e50914' }}>Update Required</h1>
+            <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: 'var(--primary-color)' }}>Update Required</h1>
             <p style={{ fontSize: '1.2rem', marginBottom: '2rem', maxWidth: '600px' }}>
                 {message || defaultMessage}
             </p>
@@ -38,7 +38,7 @@ const UpdateOverlay: React.FC<UpdateOverlayProps> = ({ message }) => {
                 style={{
                     padding: '12px 30px',
                     fontSize: '1.1rem',
-                    backgroundColor: '#e50914',
+                    backgroundColor: 'var(--primary-color)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '4px',

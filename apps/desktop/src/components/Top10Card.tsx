@@ -70,7 +70,7 @@ const Top10Card: React.FC<Top10CardProps> = ({ movie, rank, onPlay }) => {
                 {movie.inCinemas && (
                     <div style={{
                         position: 'absolute', top: '10px', right: '10px',
-                        background: '#e50914', color: 'white', fontSize: '0.65rem', fontWeight: 'bold',
+                        background: 'var(--primary-color)', color: 'black', fontSize: '0.65rem', fontWeight: 'bold',
                         padding: '3px 6px', borderRadius: '3px', textTransform: 'uppercase',
                         zIndex: 5, boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
                     }}>

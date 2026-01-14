@@ -13,7 +13,8 @@ import VideoPlayer from './components/VideoPlayer';
 import WebPlayer from './components/WebPlayer';
 import PosterCard from './components/PosterCard';
 import type { Movie } from './data/movies';
-import logo from './assets/logo.png';
+import logo from './assets/logo.svg';
+import meghaLogo from './assets/megha.svg';
 import './index.css';
 
 interface CategorySection {
@@ -396,7 +397,7 @@ function App() {
           {/* ... spinner code ... */}
           <div style={{
             width: '50px', height: '50px',
-            border: '4px solid #E50914', borderTopColor: 'transparent',
+            border: '4px solid var(--primary-color)', borderTopColor: 'transparent',
             borderRadius: '50%', animation: 'spin 1s linear infinite'
           }} />
           <p style={{ marginTop: '1rem', color: '#fff' }}>{loadingMessage}</p>
@@ -529,6 +530,21 @@ function App() {
               )) : (
                 !loading && <div style={{ minHeight: '50vh' }}></div>
               )}
+            </div>
+            {/* Footer */}
+            <div style={{
+              padding: '0.5rem 4rem',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem',
+              opacity: 1, marginTop: '-1.5rem', marginBottom: '2rem'
+            }}>
+              <img src={logo} alt="Popcorn" style={{ height: '24px' }} />
+              <span style={{ fontSize: '0.9rem', color: '#888' }}>powered by</span>
+              <img
+                src={meghaLogo}
+                alt="Megha"
+                style={{ height: '24px', cursor: 'pointer' }}
+                onClick={() => window.electronAPI?.openExternal('https://github.com/MeghaJayalath')}
+              />
             </div>
           </>
         )}
