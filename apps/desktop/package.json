@@ -1,7 +1,7 @@
 {
   "name": "@popcorn/desktop",
   "private": true,
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "Stream movies and TV shows",
   "author": "Popcorn Team",
   "main": "dist-electron/main.js",
@@ -36,6 +36,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/torrent-search-api": "^2.0.3",
     "@types/webtorrent": "^0.110.1",
+    "@types/ws": "^8.5.10",
     "@vitejs/plugin-react": "^5.1.1",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
