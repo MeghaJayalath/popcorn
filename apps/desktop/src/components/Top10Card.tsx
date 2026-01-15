@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Movie } from '../data/movies';
+import placeholder from '../assets/placeholder.png';
 
 interface Top10CardProps {
     movie: Movie;
@@ -11,6 +12,7 @@ const Top10Card: React.FC<Top10CardProps> = ({ movie, rank, onPlay }) => {
     return (
         <div
             onClick={onPlay}
+            title={movie.title}
             className="top-10-card"
             style={{
                 display: 'flex',
@@ -61,7 +63,7 @@ const Top10Card: React.FC<Top10CardProps> = ({ movie, rank, onPlay }) => {
                 backgroundColor: '#222'
             }}>
                 <img
-                    src={movie.posterUrl}
+                    src={movie.posterUrl || placeholder}
                     alt={movie.title}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />

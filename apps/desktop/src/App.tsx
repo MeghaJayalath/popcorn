@@ -453,22 +453,39 @@ function App() {
             {/* ... Links ... */}
             <div style={{ display: 'flex', gap: '20px', fontSize: '0.9rem' }}>
               <span style={{ cursor: 'pointer' }} onClick={() => setIsSearching(false)}>Home</span>
-              <span>Movies</span>
-              <span>TV Shows</span>
+              {/* <span>Movies</span>
+              <span>TV Shows</span> */}
             </div>
           </div>
 
           <form onSubmit={handleSearch} style={{ display: 'flex' }}>
-            <input
-              type="text"
-              placeholder="Search movies..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                background: 'rgba(0,0,0,0.5)', border: '1px solid #333', color: 'white',
-                padding: '8px 12px', borderRadius: '4px', outline: 'none'
-              }}
-            />
+            <div style={{
+              display: 'flex', alignItems: 'center',
+              background: 'rgba(0,0,0,0.6)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '4px',
+              padding: '6px 16px',
+              width: '240px',
+              transition: 'all 0.3s ease',
+            }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(181, 150, 110, 0.6)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ opacity: 0.6, marginRight: '8px' }}>
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  background: 'transparent', border: 'none', color: 'white',
+                  width: '100%', outline: 'none', fontSize: '0.9rem'
+                }}
+              />
+            </div>
           </form>
         </div>
 
@@ -483,16 +500,33 @@ function App() {
         />
 
         {isSearching ? (
-          <div style={{ paddingTop: '100px', paddingLeft: '4rem', paddingRight: '4rem' }}>
-            <h2>Search Results: "{searchQuery}"</h2>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', marginTop: '2rem', justifyContent: 'center' }}>
-              {searchResults.length > 0 ? searchResults.map(movie => (
-                <PosterCard key={movie.id} movie={movie} onPlay={() => handlePosterClick(movie)} progress={getProgress(movie)} />
-              )) : (
-                !loading && <p>No results found.</p>
-              )}
+          <>
+            <div style={{ paddingTop: '100px', paddingLeft: '4rem', paddingRight: '4rem', minHeight: '80vh' }}>
+              <h2>Search Results: "{searchQuery}"</h2>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', marginTop: '2rem', justifyContent: 'flex-start' }}>
+                {searchResults.length > 0 ? searchResults.map(movie => (
+                  <PosterCard key={movie.id} movie={movie} onPlay={() => handlePosterClick(movie)} progress={getProgress(movie)} />
+                )) : (
+                  !loading && <p>No results found.</p>
+                )}
+              </div>
             </div>
-          </div>
+            {/* Footer */}
+            <div style={{
+              padding: '0.5rem 4rem',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem',
+              opacity: 1, marginTop: '2rem', marginBottom: '2rem'
+            }}>
+              <img src={logo} alt="Popcorn" style={{ height: '24px' }} />
+              <span style={{ fontSize: '0.9rem', color: '#888' }}>powered by</span>
+              <img
+                src={meghaLogo}
+                alt="Megha"
+                style={{ height: '24px', cursor: 'pointer' }}
+                onClick={() => window.electronAPI?.openExternal('https://github.com/MeghaJayalath')}
+              />
+            </div>
+          </>
         ) : (
           <>
             {heroMovies.length > 0 && (

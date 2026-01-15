@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Movie } from '../data/movies';
+import placeholder from '../assets/placeholder.png';
 
 interface PosterCardProps {
     movie: Movie;
@@ -12,6 +13,7 @@ const PosterCard: React.FC<PosterCardProps> = ({ movie, onPlay, onRemove, progre
     return (
         <div
             onClick={() => onPlay(movie)}
+            title={movie.title}
             style={{
                 position: 'relative',
                 minWidth: '200px',
@@ -24,7 +26,7 @@ const PosterCard: React.FC<PosterCardProps> = ({ movie, onPlay, onRemove, progre
             className="poster-card"
         >
             <img
-                src={movie.posterUrl}
+                src={movie.posterUrl || placeholder}
                 alt={movie.title}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 loading="lazy"

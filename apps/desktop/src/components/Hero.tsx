@@ -1,6 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import type { Movie } from '../data/movies';
 
+const RATING_DESCRIPTIONS: Record<string, string> = {
+    // MPAA (Movies)
+    'G': 'General Audiences. All ages admitted.',
+    'PG': 'Parental Guidance Suggested. Some material may not be suitable for children.',
+    'PG-13': 'Parents Strongly Cautioned. Some material may be inappropriate for children under 13.',
+    'R': 'Restricted. Under 17 requires accompanying parent or adult guardian.',
+    'NC-17': 'Adults Only. No One 17 and Under Admitted.',
+    'NR': 'Not Rated.',
+
+    // TV Parental Guidelines
+    'TV-Y': 'All Children. Intended for children ages 2 to 6.',
+    'TV-Y7': 'Directed to Older Children. Intended for children age 7 and above.',
+    'TV-G': 'General Audience. Suitable for all ages.',
+    'TV-PG': 'Parental Guidance Suggested.',
+    'TV-14': 'Parents Strongly Cautioned. Intended for children over 14 years of age.',
+    'TV-MA': 'Mature Audience Only. Intended for adults and may be unsuitable for children under 17.',
+};
+
 interface HeroProps {
     movies: Movie[];
     onMoreInfo: (movie: Movie) => void;
@@ -46,7 +64,7 @@ const Hero: React.FC<HeroProps> = ({ movies, onMoreInfo }) => {
                 if (!active) return;
 
                 // Fetch Details (for Logo & Description)
-                const details = await (window.electronAPI as any).getMovieDetails(movie.id);
+                const details = await (window.electronAPI as any).getMovieDetails(movie.id, movie.type);
 
                 if (active) {
                     if (details) setHeroDetails(details);
@@ -205,8 +223,11 @@ const Hero: React.FC<HeroProps> = ({ movies, onMoreInfo }) => {
                     padding: '0.4rem 1rem',
                     color: 'white',
                     fontSize: '1rem',
-                    fontWeight: 'bold'
-                }}>
+                    fontWeight: 'bold',
+                    cursor: 'help'
+                }}
+                    title={RATING_DESCRIPTIONS[heroDetails?.certification || heroDetails?.mpaa || ''] || "Rating"}
+                >
                     {heroDetails?.certification || heroDetails?.mpaa || 'PG-13'}
                 </div>
             </div>

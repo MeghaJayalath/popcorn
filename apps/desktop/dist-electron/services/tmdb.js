@@ -100,17 +100,21 @@ const GENRES = {
 function formatMovie(m) {
     if (!m)
         return null;
-    // Calculate Cinema Window (e.g. 45 days)
+    // Calculate Cinema Window (e.g. 45 days) - Only for Movies
     let inCinemas = false;
-    const releaseDate = m.release_date || m.first_air_date;
-    if (releaseDate) {
-        const release = new Date(releaseDate);
-        const now = new Date();
-        const diffTime = Math.abs(now.getTime() - release.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        // If released in last 45 days OR in future
-        if (release > now || diffDays < 45) {
-            inCinemas = true;
+    const isTv = m.media_type === 'tv' || !!m.first_air_date;
+    // Only check for movies
+    if (!isTv) {
+        const releaseDate = m.release_date;
+        if (releaseDate) {
+            const release = new Date(releaseDate);
+            const now = new Date();
+            const diffTime = Math.abs(now.getTime() - release.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            // If released in last 45 days OR in future
+            if (release > now || diffDays < 45) {
+                inCinemas = true;
+            }
         }
     }
     return {

@@ -1,6 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Movie } from '../data/movies';
+import placeholder from '../assets/placeholder.png';
 
+
+const RATING_DESCRIPTIONS: Record<string, string> = {
+    // MPAA (Movies)
+    'G': 'General Audiences. All ages admitted.',
+    'PG': 'Parental Guidance Suggested. Some material may not be suitable for children.',
+    'PG-13': 'Parents Strongly Cautioned. Some material may be inappropriate for children under 13.',
+    'R': 'Restricted. Under 17 requires accompanying parent or adult guardian.',
+    'NC-17': 'Adults Only. No One 17 and Under Admitted.',
+    'NR': 'Not Rated.',
+
+    // TV Parental Guidelines
+    'TV-Y': 'All Children. Intended for children ages 2 to 6.',
+    'TV-Y7': 'Directed to Older Children. Intended for children age 7 and above.',
+    'TV-G': 'General Audience. Suitable for all ages.',
+    'TV-PG': 'Parental Guidance Suggested.',
+    'TV-14': 'Parents Strongly Cautioned. Intended for children over 14 years of age.',
+    'TV-MA': 'Mature Audience Only. Intended for adults and may be unsuitable for children under 17.',
+};
 
 interface DetailsPanelProps {
     movie: Movie | null;
@@ -44,6 +63,16 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
         }
 
         return (ep.progress / ep.duration) * 100;
+    };
+
+    const isEpisodeReleased = (dateString?: string) => {
+        if (!dateString) return false;
+        const releaseDate = new Date(dateString);
+        const today = new Date();
+        // Compare just dates to avoid time issues? Usually TMDB returns YYYY-MM-DD
+        // So standard comparison works. If today > releaseDate, it's released.
+        // We want to verify if it IS released, so today >= releaseDate
+        return today >= releaseDate;
     };
 
     const getMovieProgress = (magnet?: string): number => {
@@ -107,6 +136,8 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
 
     const handleEpisodeClick = async (ep: any) => {
         if (!movie) return;
+        if (!isEpisodeReleased(ep.air_date)) return;
+
         if (expandedEpisode === ep.id) {
             setExpandedEpisode(null);
             return;
@@ -278,7 +309,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                     {/* Background Image (Always) */}
                                     <div style={{
                                         position: 'absolute', inset: 0, zIndex: 0,
-                                        backgroundImage: `url(${movie.backdropUrl})`,
+                                        backgroundImage: `url(${movie.backdropUrl || placeholder})`,
                                         backgroundSize: 'cover', backgroundPosition: 'center'
                                     }} />
 
@@ -337,8 +368,11 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                 color: 'white',
                                 fontSize: '1rem',
                                 fontWeight: 'bold',
-                                zIndex: 20
-                            }}>
+                                zIndex: 20,
+                                cursor: 'help'
+                            }}
+                                title={RATING_DESCRIPTIONS[details?.certification || details?.mpaa || ''] || "Rating"}
+                            >
                                 {details?.certification || details?.mpaa || 'PG-13'}
                             </div>
                         </div>
@@ -353,6 +387,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                             </p>
 
                             <div style={{ fontSize: '0.9rem', lineHeight: '1.8' }}>
+                                <p><span style={{ color: '#777' }}>IMDb Rating:</span> <span style={{ color: '#f5c518', fontWeight: 'bold' }}>{movie.rating || details?.vote_average || 'N/A'}</span></p>
                                 <p><span style={{ color: '#777' }}>Cast:</span> <span style={{ color: 'white' }}>{cast}</span></p>
                                 <p><span style={{ color: '#777' }}>Genres:</span> <span style={{ color: 'white' }}>{genres}</span></p>
                             </div>
@@ -426,10 +461,21 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                                 <p style={{ color: '#777', fontStyle: 'italic' }}>Loading season details...</p>
                                             ) : (
                                                 episodes.map(ep => (
-                                                    <div key={ep.id} style={{ background: '#161616', padding: '16px', borderRadius: '4px', transition: 'background 0.2s' }}>
+                                                    <div key={ep.id} style={{
+                                                        background: '#161616',
+                                                        padding: '16px',
+                                                        borderRadius: '4px',
+                                                        transition: 'background 0.2s',
+                                                        opacity: isEpisodeReleased(ep.air_date) ? 1 : 0.5,
+                                                        pointerEvents: isEpisodeReleased(ep.air_date) ? 'auto' : 'none' // Actually we want to allow click but maybe just show it's disabled? NO, user asked for disabled dropdowns.
+                                                    }}>
                                                         <div
-                                                            onClick={() => handleEpisodeClick(ep)}
-                                                            style={{ display: 'flex', cursor: 'pointer', alignItems: 'center' }}
+                                                            onClick={() => isEpisodeReleased(ep.air_date) && handleEpisodeClick(ep)}
+                                                            style={{
+                                                                display: 'flex',
+                                                                cursor: isEpisodeReleased(ep.air_date) ? 'pointer' : 'default',
+                                                                alignItems: 'center'
+                                                            }}
                                                         >
                                                             <span style={{ fontSize: '1.1rem', color: '#777', width: '35px', marginRight: '10px', textAlign: 'center' }}>{ep.episode_number}</span>
                                                             <div style={{ flex: 1, marginRight: '1rem' }}>
@@ -450,17 +496,29 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                                                 )}
                                                                 {expandedEpisode !== ep.id && (
                                                                     <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '35vw' }}>
-                                                                        {ep.overview}
+                                                                        {isEpisodeReleased(ep.air_date)
+                                                                            ? ep.overview
+                                                                            : (ep.air_date
+                                                                                ? `Available on: ${new Date(ep.air_date).toLocaleDateString('en-GB')}`
+                                                                                : "Release date yet to be announced.")}
                                                                     </p>
                                                                 )}
                                                             </div>
                                                             <button style={{
-                                                                background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer'
+                                                                background: 'transparent', border: 'none', color: '#aaa', cursor: isEpisodeReleased(ep.air_date) ? 'pointer' : 'default'
                                                             }}>
                                                                 {expandedEpisode === ep.id ? (
                                                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
                                                                 ) : (
-                                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                                                    isEpisodeReleased(ep.air_date) ? (
+                                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                                                    ) : (
+                                                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ opacity: 0.5 }}>
+                                                                            <circle cx="12" cy="12" r="10"></circle>
+                                                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                                                        </svg>
+                                                                    )
                                                                 )}
                                                             </button>
                                                         </div>
@@ -469,7 +527,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                                         {expandedEpisode === ep.id && (
                                                             <div style={{ marginTop: '1rem', borderTop: '1px solid #333', paddingTop: '1rem', animation: 'fadeIn 0.3s' }}>
                                                                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                                                                    {ep.still_path && <img src={ep.still_path} alt={ep.name} style={{ width: '180px', borderRadius: '4px', objectFit: 'cover' }} />}
+                                                                    <img src={ep.still_path || placeholder} alt={ep.name} style={{ width: '180px', borderRadius: '4px', objectFit: 'cover' }} />
                                                                     <p style={{ fontSize: '0.9rem', color: '#bfbfbf', lineHeight: '1.5', flex: 1 }}>{ep.overview || "No description available."}</p>
                                                                 </div>
 
