@@ -9,7 +9,7 @@ export interface ElectronAPI {
     getCategory: (genre: string) => Promise<any[]>;
     getTorrents: (title: string, year: number) => Promise<any[]>;
     getMagnet: (title: string, year: number) => Promise<string | null>;
-    getMovieDetails: (id: string) => Promise<any>;
+    getMovieDetails: (id: string, type?: string) => Promise<any>;
     getSeasonDetails: (tvId: string, seasonNumber: number) => Promise<any>;
     getEpisodeTorrents: (title: string, season: number, episode: number) => Promise<any[]>;
     getWatchProgress: (tmdbId: string, season?: number, episode?: number) => Promise<{ progress: number; duration: number; lastWatched: number } | null>;

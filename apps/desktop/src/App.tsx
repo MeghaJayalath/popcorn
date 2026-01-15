@@ -213,7 +213,7 @@ function App() {
       // Fetch details
       const movies = await Promise.all(top.map(async (c) => {
         try {
-          const d = await window.electronAPI.getMovieDetails(c.id);
+          const d = await window.electronAPI.getMovieDetails(c.id, c.type);
           return {
             id: d.id,
             title: d.title || d.name,

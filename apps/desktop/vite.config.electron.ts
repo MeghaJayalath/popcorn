@@ -25,6 +25,11 @@ export default defineConfig({
         rollupOptions: {
             external: [
                 'electron',
+                'webtorrent',
+                'torrent-search-api',
+                'cheerio',
+                'axios',
+                'semver',
                 ...builtinModules,
                 ...builtinModules.map((m) => `node:${m}`),
             ],

@@ -1,7 +1,7 @@
 {
   "name": "@popcorn/desktop",
   "private": true,
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "Stream movies and TV shows",
   "author": "Popcorn Team",
   "main": "dist-electron/main.js",
@@ -67,7 +67,30 @@
         "from": "../../node_modules",
         "to": "node_modules",
         "filter": [
-          "**/*"
+          "!**/electron/**",
+          "!**/electron-builder/**",
+          "!**/electron-builder-squirrel-windows/**",
+          "!**/electron-publish/**",
+          "!**/electron-winstaller/**",
+          "!**/typescript/**",
+          "!**/vite/**",
+          "!**/eslint/**",
+          "!**/@eslint/**",
+          "!**/@vitejs/**",
+          "!**/@types/react/**",
+          "!**/@types/react-dom/**",
+          "!**/@types/node/**",
+          "!**/@types/webtorrent/**",
+          "!**/@types/torrent-search-api/**",
+          "!**/@types/ws/**",
+          "!**/concurrently/**",
+          "!**/cross-env/**",
+          "!**/wait-on/**",
+          "!**/globals/**",
+          "!**/typescript-eslint/**",
+          "!**/eslint-plugin-react-hooks/**",
+          "!**/eslint-plugin-react-refresh/**",
+          "!**/.bin/**"
         ]
       }
     ],
