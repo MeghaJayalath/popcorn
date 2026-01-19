@@ -46,7 +46,7 @@ function App() {
   const [dataLoaded, setDataLoaded] = useState(false);
 
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
-  const [webStreamParams, setWebStreamParams] = useState<{ tmdbId: string, season?: number, episode?: number } | null>(null);
+  const [webStreamParams, setWebStreamParams] = useState<{ tmdbId: string, season?: number, episode?: number, provider?: string } | null>(null);
   const [playbackParams, setPlaybackParams] = useState<{ tmdbId: string, season?: number, episode?: number, magnet?: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -370,6 +370,15 @@ function App() {
     // Keep panel open underneath
   };
 
+  const handleWebPlayerClose = async () => {
+    setWebStreamParams(null);
+    if (window.electronAPI) {
+      // Refresh history to show progress immediately
+      const history = await window.electronAPI.getWatchHistory();
+      setWatchHistory(history);
+    }
+  };
+
   return (
     <div className="App">
       {/* 1. Priority: Update Overlay */}
@@ -422,6 +431,10 @@ function App() {
         <VideoPlayer
           url={streamUrl}
           onClose={handleClosePlayer}
+          onWebStream={(id, s, e) => {
+            handleClosePlayer(); // Close current player first
+            setWebStreamParams({ tmdbId: id, season: s, episode: e });
+          }}
           tmdbId={playbackParams?.tmdbId}
           season={playbackParams?.season}
           episode={playbackParams?.episode}
@@ -434,7 +447,7 @@ function App() {
           tmdbId={webStreamParams.tmdbId}
           season={webStreamParams.season}
           episode={webStreamParams.episode}
-          onClose={() => setWebStreamParams(null)}
+          onClose={handleWebPlayerClose}
         />
       )}
 

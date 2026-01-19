@@ -46,7 +46,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
     };
 
     // Progress Helpers
-    const getEpisodeProgress = (season: number, epNum: number, magnet?: string): number => {
+    const getEpisodeProgress = (season: number, epNum: number, sourceId?: string): number => {
         if (!watchHistory || !watchHistory.shows || !movie) return 0;
         const show = watchHistory.shows[movie.id.toString()];
         if (!show) return 0;
@@ -56,10 +56,22 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
 
         if (!ep || !ep.duration) return 0;
 
-        if (magnet && ep.magnet) {
-            const h1 = extractHash(magnet);
-            const h2 = extractHash(ep.magnet);
-            if (h1 && h2 && h1 !== h2) return 0;
+        if (sourceId) {
+            const storedMagnet = ep.magnet;
+            if (!storedMagnet) return 0;
+
+            const isHash = storedMagnet.startsWith('magnet:?xt=urn:btih:');
+
+            if (isHash) {
+                // Stored is Torrent
+                const h1 = extractHash(sourceId); // sourceId is magnet
+                const h2 = extractHash(storedMagnet);
+                if (h1 && h2 && h1 !== h2) return 0;
+                if (!h1) return 0; // sourceId wasn't magnet but stored is
+            } else {
+                // Stored is Web Provider (string)
+                if (storedMagnet !== sourceId) return 0;
+            }
         }
 
         return (ep.progress / ep.duration) * 100;
@@ -69,23 +81,30 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
         if (!dateString) return false;
         const releaseDate = new Date(dateString);
         const today = new Date();
-        // Compare just dates to avoid time issues? Usually TMDB returns YYYY-MM-DD
-        // So standard comparison works. If today > releaseDate, it's released.
-        // We want to verify if it IS released, so today >= releaseDate
         return today >= releaseDate;
     };
 
-    const getMovieProgress = (magnet?: string): number => {
+    const getMovieProgress = (sourceId?: string): number => {
         if (!watchHistory || !watchHistory.movies || !movie || movie.type === 'tv') return 0;
         const entry = watchHistory.movies[movie.id.toString()];
         if (!entry || !entry.duration) return 0;
 
-        if (magnet && entry.magnet) {
-            const h1 = extractHash(magnet);
-            const h2 = extractHash(entry.magnet);
-            if (h1 && h2 && h1 !== h2) return 0;
-        } else if (magnet && !entry.magnet) {
-            // allow mismatch if old history? strict for now
+        if (sourceId) {
+            const storedMagnet = entry.magnet;
+            if (!storedMagnet) return 0;
+
+            const isHash = storedMagnet.startsWith('magnet:?xt=urn:btih:');
+
+            if (isHash) {
+                // Stored is Torrent
+                const h1 = extractHash(sourceId);
+                const h2 = extractHash(storedMagnet);
+                if (h1 && h2 && h1 !== h2) return 0;
+                if (!h1) return 0;
+            } else {
+                // Stored is Web Provider (string)
+                if (storedMagnet !== sourceId) return 0;
+            }
         }
 
         return (entry.progress / entry.duration) * 100;
@@ -280,6 +299,8 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
 
+                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+
                 {isLoading ? (
                     <div style={{
                         height: '100%', display: 'flex', flexDirection: 'column',
@@ -291,7 +312,6 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                             borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '1rem'
                         }} />
                         <p>Loading details...</p>
-                        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
                     </div>
                 ) : (
                     <>
@@ -387,7 +407,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                             </p>
 
                             <div style={{ fontSize: '0.9rem', lineHeight: '1.8' }}>
-                                <p><span style={{ color: '#777' }}>IMDb Rating:</span> <span style={{ color: '#f5c518', fontWeight: 'bold' }}>{movie.rating || details?.vote_average || 'N/A'}</span></p>
+                                <p><span style={{ color: '#777' }}>TMDB Rating:</span> <span style={{ color: '#f5c518', fontWeight: 'bold' }}>{movie.rating || details?.vote_average || 'N/A'}</span></p>
                                 <p><span style={{ color: '#777' }}>Cast:</span> <span style={{ color: 'white' }}>{cast}</span></p>
                                 <p><span style={{ color: '#777' }}>Genres:</span> <span style={{ color: 'white' }}>{genres}</span></p>
                             </div>
@@ -456,12 +476,14 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                             )}
                                         </div>
 
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2px', width: '100%' }}>
                                             {loadingEpisodes ? (
                                                 <p style={{ color: '#777', fontStyle: 'italic' }}>Loading season details...</p>
                                             ) : (
                                                 episodes.map(ep => (
                                                     <div key={ep.id} style={{
+                                                        width: '100%',
+                                                        boxSizing: 'border-box',
                                                         background: '#161616',
                                                         padding: '16px',
                                                         borderRadius: '4px',
@@ -473,6 +495,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                                             onClick={() => isEpisodeReleased(ep.air_date) && handleEpisodeClick(ep)}
                                                             style={{
                                                                 display: 'flex',
+                                                                width: '100%',
                                                                 cursor: isEpisodeReleased(ep.air_date) ? 'pointer' : 'default',
                                                                 alignItems: 'center'
                                                             }}
@@ -533,55 +556,64 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
 
                                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                                                                     <h5 style={{ color: '#eee', margin: 0, fontSize: '0.9rem' }}>Select Source:</h5>
+                                                                </div>
+                                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
                                                                     {onWebStream && (
                                                                         <button
                                                                             onClick={() => onWebStream(movie.id, selectedSeason, ep.episode_number)}
                                                                             style={{
-                                                                                background: 'var(--primary-color)', border: 'none', color: 'black',
-                                                                                padding: '4px 10px', borderRadius: '4px', fontSize: '0.8rem',
-                                                                                cursor: 'pointer', fontWeight: 600
+                                                                                background: '#333', border: '1px solid #444', borderRadius: '4px',
+                                                                                padding: '10px', textAlign: 'left', cursor: 'pointer', width: '100%',
+                                                                                transition: 'background 0.2s', position: 'relative', overflow: 'hidden'
                                                                             }}
+                                                                            onMouseEnter={e => e.currentTarget.style.background = '#444'}
+                                                                            onMouseLeave={e => e.currentTarget.style.background = '#333'}
                                                                         >
-                                                                            Play via Web (Fast)
+                                                                            <div style={{ fontWeight: 'bold', color: '#8A2BE2', marginBottom: '4px' }}>
+                                                                                Play via Web
+                                                                            </div>
+                                                                            <div style={{ fontSize: '0.8rem', color: '#aaa' }}>Fast Stream (Vidking)</div>
+                                                                            {getEpisodeProgress(selectedSeason, ep.episode_number, 'vidking') > 0 && (
+                                                                                <div style={{
+                                                                                    position: 'absolute', bottom: 0, left: 0, height: '4px',
+                                                                                    background: 'var(--primary-color)', width: `${getEpisodeProgress(selectedSeason, ep.episode_number, 'vidking')}%`
+                                                                                }} />
+                                                                            )}
                                                                         </button>
                                                                     )}
+                                                                    {episodeTorrents.map((t, i) => (
+                                                                        <button
+                                                                            key={i}
+                                                                            onClick={() => onStream(t.magnet, selectedSeason, ep.episode_number)}
+                                                                            style={{
+                                                                                background: '#333', border: '1px solid #444', borderRadius: '4px',
+                                                                                padding: '10px', textAlign: 'left', cursor: 'pointer', width: '100%',
+                                                                                transition: 'background 0.2s', position: 'relative', overflow: 'hidden'
+                                                                            }}
+                                                                            onMouseEnter={e => e.currentTarget.style.background = '#444'}
+                                                                            onMouseLeave={e => e.currentTarget.style.background = '#333'}
+                                                                        >
+                                                                            <div style={{ fontWeight: 'bold', color: '#fff', marginBottom: '4px' }}>
+                                                                                {t.quality}
+                                                                            </div>
+                                                                            <div style={{ fontSize: '0.8rem', color: '#aaa' }}>{t.size} • {t.seeds} seeds</div>
+
+                                                                            {getEpisodeProgress(selectedSeason, ep.episode_number, t.magnet) > 0 && (
+                                                                                <div style={{
+                                                                                    position: 'absolute', bottom: 0, left: 0, height: '4px',
+                                                                                    background: 'var(--primary-color)', width: `${getEpisodeProgress(selectedSeason, ep.episode_number, t.magnet)}%`
+                                                                                }} />
+                                                                            )}
+                                                                        </button>
+                                                                    ))}
                                                                 </div>
-                                                                {loadingEpisodeTorrents ? (
-                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#777' }}>
+                                                                {loadingEpisodeTorrents && (
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#777', marginTop: '10px' }}>
                                                                         <div style={{ width: '16px', height: '16px', border: '2px solid #555', borderTopColor: 'var(--primary-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                                                                         <span>Searching high-quality streams...</span>
                                                                     </div>
-                                                                ) : (
-                                                                    episodeTorrents.length > 0 ? (
-                                                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
-                                                                            {episodeTorrents.map((t, i) => (
-                                                                                <button
-                                                                                    key={i}
-                                                                                    onClick={() => onStream(t.magnet, selectedSeason, ep.episode_number)}
-                                                                                    style={{
-                                                                                        background: '#333', border: '1px solid #444', borderRadius: '4px',
-                                                                                        padding: '10px', textAlign: 'left', cursor: 'pointer', width: '100%',
-                                                                                        transition: 'background 0.2s', position: 'relative', overflow: 'hidden'
-                                                                                    }}
-                                                                                    onMouseEnter={e => e.currentTarget.style.background = '#444'}
-                                                                                    onMouseLeave={e => e.currentTarget.style.background = '#333'}
-                                                                                >
-                                                                                    <div style={{ fontWeight: 'bold', color: '#fff', marginBottom: '4px' }}>
-                                                                                        {t.quality}
-                                                                                    </div>
-                                                                                    <div style={{ fontSize: '0.8rem', color: '#aaa' }}>{t.size} • {t.seeds} seeds</div>
-
-                                                                                    {getEpisodeProgress(selectedSeason, ep.episode_number, t.magnet) > 0 && (
-                                                                                        <div style={{
-                                                                                            position: 'absolute', bottom: 0, left: 0, height: '4px',
-                                                                                            background: 'var(--primary-color)', width: `${getEpisodeProgress(selectedSeason, ep.episode_number, t.magnet)}%`
-                                                                                        }} />
-                                                                                    )}
-                                                                                </button>
-                                                                            ))}
-                                                                        </div>
-                                                                    ) : <p style={{ color: '#d64d4d', fontSize: '0.9rem' }}>No streams found for this episode.</p>
                                                                 )}
+                                                                {!loadingEpisodeTorrents && episodeTorrents.length === 0 && !onWebStream && <p style={{ color: '#d64d4d', fontSize: '0.9rem', marginTop: '10px' }}>No streams found for this episode.</p>}
                                                             </div>
                                                         )}
                                                     </div>
@@ -593,23 +625,6 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                     <>
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
                                             <h3 style={{ fontSize: '1.1rem', color: '#eee', margin: 0 }}>Available Streams</h3>
-                                            {onWebStream && (
-                                                <button
-                                                    onClick={() => !movie.inCinemas && onWebStream(movie.id)}
-                                                    disabled={!!movie.inCinemas}
-                                                    style={{
-                                                        background: movie.inCinemas ? '#333' : 'var(--primary-color)',
-                                                        border: 'none', color: 'black',
-                                                        padding: '6px 12px', borderRadius: '4px', fontSize: '0.85rem',
-                                                        cursor: movie.inCinemas ? 'not-allowed' : 'pointer',
-                                                        fontWeight: 600,
-                                                        opacity: movie.inCinemas ? 0.5 : 1
-                                                    }}
-                                                    title={movie.inCinemas ? "Not available while in cinemas" : ""}
-                                                >
-                                                    Play via Web (Fast)
-                                                </button>
-                                            )}
                                         </div>
                                         {movie.inCinemas ? (
                                             <div style={{
@@ -623,8 +638,32 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                                 </p>
                                             </div>
                                         ) : (
-                                            torrents.length > 0 ? (
+                                            (torrents.length > 0 || (!movie.inCinemas && onWebStream)) ? (
                                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
+                                                    {onWebStream && !movie.inCinemas && (
+                                                        <button
+                                                            onClick={() => onWebStream(movie.id)}
+                                                            style={{
+                                                                background: '#333', border: '1px solid #444', borderRadius: '4px',
+                                                                padding: '10px', textAlign: 'left', cursor: 'pointer',
+                                                                transition: 'background 0.2s',
+                                                                minWidth: '140px', position: 'relative', overflow: 'hidden'
+                                                            }}
+                                                            onMouseEnter={e => e.currentTarget.style.background = '#444'}
+                                                            onMouseLeave={e => e.currentTarget.style.background = '#333'}
+                                                        >
+                                                            <div style={{ fontWeight: 'bold', color: '#8A2BE2', marginBottom: '4px' }}>
+                                                                Play via Web
+                                                            </div>
+                                                            <div style={{ fontSize: '0.8rem', color: '#aaa' }}>Fast Stream (Vidking)</div>
+                                                            {getMovieProgress('vidking') > 0 && (
+                                                                <div style={{
+                                                                    position: 'absolute', bottom: 0, left: 0, height: '4px',
+                                                                    background: 'var(--primary-color)', width: `${getMovieProgress('vidking')}%`
+                                                                }} />
+                                                            )}
+                                                        </button>
+                                                    )}
                                                     {torrents.map((t: any, i: number) => (
                                                         <button
                                                             key={i}

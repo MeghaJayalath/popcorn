@@ -8,13 +8,65 @@ interface WebPlayerProps {
 }
 
 const WebPlayer: React.FC<WebPlayerProps> = ({ tmdbId, season, episode, onClose }) => {
-    // Construct VidSrc URL
-    // Movie: https://vidsrc.xyz/embed/movie/{tmdb_id}
-    // TV: https://vidsrc.xyz/embed/tv/{tmdb_id}/{season}/{episode}
+    // Listen for Vidking Progress Events
+    React.useEffect(() => {
+        let lastUpdate = 0;
 
-    const src = (season && episode)
-        ? `https://vidsrc.xyz/embed/tv/${tmdbId}/${season}/${episode}`
-        : `https://vidsrc.xyz/embed/movie/${tmdbId}`;
+        const handleMessage = (event: MessageEvent) => {
+            // Vidking sends JSON data
+            // Structure: { type: "PLAYER_EVENT", data: { event: "timeupdate", currentTime, duration, ... } }
+            try {
+                // User example says "if (typeof event.data === 'string') ... JSON.parse(event.data)"
+                if (typeof event.data !== 'string') return;
+
+                const payload = JSON.parse(event.data);
+
+                if (payload && payload.type === 'PLAYER_EVENT' && payload.data) {
+                    const { event: evtName, currentTime, duration } = payload.data;
+
+                    if (evtName === 'timeupdate' || evtName === 'pause') {
+                        const now = Date.now();
+                        // Throttle updates to every 5 seconds (matching VideoPlayer.tsx)
+                        // Always save on pause
+                        if (evtName === 'pause' || (now - lastUpdate > 5000)) {
+                            // Match updateWatchProgress signature:
+                            // updateWatchProgress(tmdbId, currentSeconds, duration, season, episode, magnet?)
+
+                            if (window.electronAPI && currentTime > 0) {
+                                window.electronAPI.updateWatchProgress(
+                                    tmdbId,
+                                    currentTime,
+                                    duration,
+                                    season,
+                                    episode,
+                                    'vidking' // Hardcoded provider ID
+                                ).catch(e => console.error("Failed to sync progress", e));
+                                lastUpdate = now;
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                // Ignore parsing errors for other messages
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, [tmdbId, season, episode]);
+
+    // Customize player color to match app theme (FDEDAD)
+    const primaryColor = 'FDEDAD'; // without hash
+
+    let src = '';
+
+    if (season && episode) {
+        // TV Show: https://vidking.net/embed/tv/{tmdb_id}/{season}/{episode}?color={hex}
+        src = `https://vidking.net/embed/tv/${tmdbId}/${season}/${episode}?color=${primaryColor}`;
+    } else {
+        // Movie: https://vidking.net/embed/movie/{tmdb_id}?color={hex}
+        src = `https://vidking.net/embed/movie/${tmdbId}?color=${primaryColor}`;
+    }
 
     return (
         <div style={{
