@@ -1,7 +1,7 @@
 {
   "name": "@popcorn/desktop",
   "private": true,
-  "version": "1.0.23",
+  "version": "1.0.24",
   "description": "Stream movies and TV shows",
   "author": "Popcorn Team",
   "main": "dist-electron/main.js",
@@ -12,9 +12,9 @@
   "scripts": {
     "dev": "concurrently -k \"vite\" \"npm run dev:electron\"",
     "dev:electron": "tsc -p tsconfig.electron.json && wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
-    "build": "npm run build:prepare && electron-builder",
+    "build": "cross-env ARCH_SUFFIX=\"\" npm run build:prepare && cross-env ARCH_SUFFIX=\"\" electron-builder",
     "build:prepare": "tsc -b && vite build && npm run build:electron",
-    "build:mac": "npm run build:prepare && electron-builder --mac --x64 -c.directories.output=dist/x64 && electron-builder --mac --arm64 -c.directories.output=dist/arm64",
+    "build:mac": "npm run build:prepare && cross-env ARCH_SUFFIX=/x64 electron-builder --mac --x64 && cross-env ARCH_SUFFIX=/arm64 electron-builder --mac --arm64",
     "build:electron": "tsc -p tsconfig.electron.json",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -57,7 +57,7 @@
     "appId": "com.popcorn.app",
     "productName": "Popcorn",
     "directories": {
-      "output": "dist"
+      "output": "dist${env.ARCH_SUFFIX}"
     },
     "files": [
       "dist/**/*",
