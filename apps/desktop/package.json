@@ -1,7 +1,7 @@
 {
   "name": "@popcorn/desktop",
   "private": true,
-  "version": "1.0.26",
+  "version": "1.0.27",
   "description": "Stream movies and TV shows",
   "author": "Popcorn Team",
   "main": "dist-electron/main.js",
@@ -111,15 +111,7 @@
       "icon": "public/icon.png"
     },
     "mac": {
-      "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        }
-      ],
+      "target": "dmg",
       "icon": "public/icon.png",
       "category": "public.app-category.entertainment"
     },
