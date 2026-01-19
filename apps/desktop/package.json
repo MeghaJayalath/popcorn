@@ -1,7 +1,7 @@
 {
   "name": "@popcorn/desktop",
   "private": true,
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "Stream movies and TV shows",
   "author": "Popcorn Team",
   "main": "dist-electron/main.js",
@@ -12,7 +12,9 @@
   "scripts": {
     "dev": "concurrently -k \"vite\" \"npm run dev:electron\"",
     "dev:electron": "tsc -p tsconfig.electron.json && wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
-    "build": "tsc -b && vite build && npm run build:electron && electron-builder",
+    "build": "npm run build:prepare && electron-builder",
+    "build:prepare": "tsc -b && vite build && npm run build:electron",
+    "build:mac": "npm run build:prepare && electron-builder --mac --x64 -c.directories.output=dist/x64 && electron-builder --mac --arm64 -c.directories.output=dist/arm64",
     "build:electron": "tsc -p tsconfig.electron.json",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -117,8 +119,7 @@
         }
       ],
       "icon": "public/icon.png",
-      "category": "public.app-category.entertainment",
-      "artifactName": "${productName}-${version}-${arch}.${ext}"
+      "category": "public.app-category.entertainment"
     },
     "nsis": {
       "oneClick": false,
