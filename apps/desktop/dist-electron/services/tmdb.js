@@ -48,6 +48,7 @@ const axios_1 = __importDefault(require("axios"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const electron_1 = require("electron");
+const omdb_1 = require("./omdb");
 // --- Environment Variable Loading (Simple Implementation) ---
 let TMDB_API_KEY = process.env.TMDB_API_KEY || '';
 if (!TMDB_API_KEY) {
@@ -236,8 +237,14 @@ async function getMovieDetailsTMDB(id, type) {
             const director = m.credits?.crew?.find((c) => c.job === 'Director')?.name || 'Unknown';
             const cast = m.credits?.cast?.slice(0, 5).map((c) => c.name) || [];
             const genres = m.genres?.map((g) => g.name) || [];
+            // Fetch OMDB Ratings
+            let omdbRatings = {};
+            if (m.imdb_id) {
+                omdbRatings = await (0, omdb_1.getOMDBRatings)(m.imdb_id);
+            }
             return {
                 ...formatMovie(m),
+                ...omdbRatings, // Merge OMDB ratings
                 director,
                 cast,
                 genres,
@@ -261,7 +268,7 @@ async function getMovieDetailsTMDB(id, type) {
         const resTv = await axios_1.default.get(`${BASE_URL}/tv/${id}`, {
             params: {
                 api_key: TMDB_API_KEY,
-                append_to_response: 'credits,videos,images,content_ratings',
+                append_to_response: 'credits,videos,images,content_ratings,external_ids',
                 include_image_language: 'en,null'
             }
         });
@@ -277,10 +284,16 @@ async function getMovieDetailsTMDB(id, type) {
         const ratings = m.content_ratings?.results?.find((r) => r.iso_3166_1 === 'US');
         if (ratings)
             certification = ratings.rating;
+        // Fetch OMDB Ratings (TV shows usually have imdb_id in external_ids)
+        let omdbRatings = {};
+        if (m.external_ids && m.external_ids.imdb_id) {
+            omdbRatings = await (0, omdb_1.getOMDBRatings)(m.external_ids.imdb_id);
+        }
         const cast = m.credits?.cast?.slice(0, 5).map((c) => c.name) || [];
         const genres = m.genres?.map((g) => g.name) || [];
         return {
             ...formatMovie(m),
+            ...omdbRatings,
             cast,
             genres,
             logoUrl,

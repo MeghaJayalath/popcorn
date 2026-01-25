@@ -231,6 +231,35 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
         return () => { active = false; };
     }, [movie, isOpen]);
 
+    // Favorites Logic
+    const [isFavorite, setIsFavorite] = useState(false);
+
+    useEffect(() => {
+        if (!movie || !isOpen || !window.electronAPI) return;
+        async function checkFavorite() {
+            try {
+                const favs = await window.electronAPI.getFavorites();
+                setIsFavorite(!!favs[movie!.id.toString()]);
+            } catch (e) { console.error(e); }
+        }
+        checkFavorite();
+    }, [movie, isOpen]);
+
+    const toggleFavorite = async () => {
+        if (!movie || !window.electronAPI) return;
+        try {
+            if (isFavorite) {
+                await window.electronAPI.removeFavorite(movie.id.toString());
+                setIsFavorite(false);
+            } else {
+                await window.electronAPI.addFavorite(movie);
+                setIsFavorite(true);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
 
 
     // Lock Body Scroll when panel is open
@@ -297,6 +326,26 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                     }}
                 >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+
+                {/* Favorites Button */}
+                <button
+                    onClick={toggleFavorite}
+                    style={{
+                        position: 'absolute', top: '60px', right: '15px',
+                        zIndex: 30,
+                        background: 'rgba(0,0,0,0.5)',
+                        border: 'none', color: isFavorite ? 'var(--primary-color)' : 'white',
+                        borderRadius: '50%', width: '36px', height: '36px',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        backdropFilter: 'blur(4px)',
+                        transition: 'all 0.2s'
+                    }}
+                    title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
                 </button>
 
                 <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
@@ -407,7 +456,20 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                             </p>
 
                             <div style={{ fontSize: '0.9rem', lineHeight: '1.8' }}>
-                                <p><span style={{ color: '#777' }}>TMDB Rating:</span> <span style={{ color: '#f5c518', fontWeight: 'bold' }}>{movie.rating || details?.vote_average || 'N/A'}</span></p>
+                                <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '8px' }}>
+                                    <p style={{ margin: 0 }}>
+                                        <span style={{ color: '#777' }}>Year:</span>{' '}
+                                        <span style={{ color: 'white', fontWeight: 'bold' }}>
+                                            {details?.year || movie.year || 'N/A'}
+                                        </span>
+                                    </p>
+                                    <p style={{ margin: 0 }}>
+                                        <span style={{ color: '#777' }}>IMDB:</span>{' '}
+                                        <span style={{ color: '#f5c518', fontWeight: 'bold' }}>
+                                            {details?.imdb || movie.rating || details?.vote_average || 'N/A'}
+                                        </span>
+                                    </p>
+                                </div>
                                 <p><span style={{ color: '#777' }}>Cast:</span> <span style={{ color: 'white' }}>{cast}</span></p>
                                 <p><span style={{ color: '#777' }}>Genres:</span> <span style={{ color: 'white' }}>{genres}</span></p>
                             </div>
@@ -570,9 +632,9 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                                                             onMouseLeave={e => e.currentTarget.style.background = '#333'}
                                                                         >
                                                                             <div style={{ fontWeight: 'bold', color: '#8A2BE2', marginBottom: '4px' }}>
-                                                                                Play via Web
+                                                                                Play via Vidking
                                                                             </div>
-                                                                            <div style={{ fontSize: '0.8rem', color: '#aaa' }}>Fast Stream (Vidking)</div>
+                                                                            <div style={{ fontSize: '0.8rem', color: '#aaa' }}>(fast stream)</div>
                                                                             {getEpisodeProgress(selectedSeason, ep.episode_number, 'vidking') > 0 && (
                                                                                 <div style={{
                                                                                     position: 'absolute', bottom: 0, left: 0, height: '4px',
@@ -653,9 +715,9 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                                             onMouseLeave={e => e.currentTarget.style.background = '#333'}
                                                         >
                                                             <div style={{ fontWeight: 'bold', color: '#8A2BE2', marginBottom: '4px' }}>
-                                                                Play via Web
+                                                                Play via Vidking
                                                             </div>
-                                                            <div style={{ fontSize: '0.8rem', color: '#aaa' }}>Fast Stream (Vidking)</div>
+                                                            <div style={{ fontSize: '0.8rem', color: '#aaa' }}>(fast stream)</div>
                                                             {getMovieProgress('vidking') > 0 && (
                                                                 <div style={{
                                                                     position: 'absolute', bottom: 0, left: 0, height: '4px',

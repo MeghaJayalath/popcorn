@@ -19,6 +19,9 @@ electron_1.contextBridge.exposeInMainWorld('electronAPI', {
     updateWatchProgress: (tmdbId, progress, duration, season, episode, magnet) => electron_1.ipcRenderer.invoke('update-watch-progress', tmdbId, progress, duration, season, episode, magnet),
     removeWatchProgress: (tmdbId) => electron_1.ipcRenderer.invoke('remove-watch-progress', tmdbId),
     getWatchHistory: () => electron_1.ipcRenderer.invoke('get-watch-history'),
+    addFavorite: (movie) => electron_1.ipcRenderer.invoke('add-favorite', movie),
+    removeFavorite: (tmdbId) => electron_1.ipcRenderer.invoke('remove-favorite', tmdbId),
+    getFavorites: () => electron_1.ipcRenderer.invoke('get-favorites'),
     openExternal: (url) => electron_1.ipcRenderer.invoke('open-external', url)
 });
 //# sourceMappingURL=preload.js.map

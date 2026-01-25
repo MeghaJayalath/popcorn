@@ -54,6 +54,23 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onClose, onWebStream, tm
         }
     };
 
+    // Save on Unmount / Close
+    useEffect(() => {
+        return () => {
+            if (videoRef.current && tmdbId && window.electronAPI) {
+                // Force save on unmount
+                window.electronAPI.updateWatchProgress(
+                    tmdbId,
+                    videoRef.current.currentTime,
+                    videoRef.current.duration,
+                    season,
+                    episode,
+                    magnet
+                );
+            }
+        };
+    }, [tmdbId, season, episode, magnet]);
+
     useEffect(() => {
         if (videoRef.current) {
             videoRef.current.play().catch(e => console.error("Auto-play failed", e));
@@ -157,7 +174,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onClose, onWebStream, tm
                                 onMouseEnter={e => e.currentTarget.style.background = '#333'}
                                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                             >
-                                📋 Copy Stream URL
+                                Copy Stream URL
                             </button>
                             <button
                                 onClick={() => {
@@ -176,7 +193,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onClose, onWebStream, tm
                                 onMouseEnter={e => e.currentTarget.style.background = '#333'}
                                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                             >
-                                🚀 Play via Web (Fast)
+                                Play via Vidking
                             </button>
                         </div>
                     )}

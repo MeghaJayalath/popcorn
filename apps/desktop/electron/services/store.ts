@@ -12,6 +12,7 @@ interface MediaProgress {
 interface HistoryStoreData {
     movies: Record<string, MediaProgress>; // Key: tmdbId
     shows: Record<string, Record<string, MediaProgress>>; // Key: tmdbId -> s{X}e{Y}
+    favorites: Record<string, any>; // Key: tmdbId, Value: Movie Object
 }
 
 class HistoryStore {
@@ -31,7 +32,7 @@ class HistoryStore {
         } catch (e) {
             console.error("Failed to load history:", e);
         }
-        return { movies: {}, shows: {} };
+        return { movies: {}, shows: {}, favorites: {} };
     }
 
     private save() {
@@ -81,6 +82,24 @@ class HistoryStore {
             delete this.data.shows[tmdbId];
         }
         this.save();
+    }
+
+    // Favorites Logic
+    public addFavorite(movie: any) {
+        if (!this.data.favorites) this.data.favorites = {};
+        this.data.favorites[movie.id.toString()] = movie;
+        this.save();
+    }
+
+    public removeFavorite(tmdbId: string) {
+        if (this.data.favorites && this.data.favorites[tmdbId]) {
+            delete this.data.favorites[tmdbId];
+            this.save();
+        }
+    }
+
+    public getFavorites() {
+        return this.data.favorites || {};
     }
 }
 

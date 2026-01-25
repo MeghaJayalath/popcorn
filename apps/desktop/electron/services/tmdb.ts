@@ -2,6 +2,7 @@ import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import { app } from 'electron';
+import { getOMDBRatings } from './omdb';
 
 // --- Environment Variable Loading (Simple Implementation) ---
 let TMDB_API_KEY = process.env.TMDB_API_KEY || '';
@@ -202,8 +203,15 @@ export async function getMovieDetailsTMDB(id: string, type?: string) {
             const cast = m.credits?.cast?.slice(0, 5).map((c: any) => c.name) || [];
             const genres = m.genres?.map((g: any) => g.name) || [];
 
+            // Fetch OMDB Ratings
+            let omdbRatings = {};
+            if (m.imdb_id) {
+                omdbRatings = await getOMDBRatings(m.imdb_id);
+            }
+
             return {
                 ...formatMovie(m),
+                ...omdbRatings, // Merge OMDB ratings
                 director,
                 cast,
                 genres,
@@ -227,7 +235,7 @@ export async function getMovieDetailsTMDB(id: string, type?: string) {
         const resTv = await axios.get(`${BASE_URL}/tv/${id}`, {
             params: {
                 api_key: TMDB_API_KEY,
-                append_to_response: 'credits,videos,images,content_ratings',
+                append_to_response: 'credits,videos,images,content_ratings,external_ids',
                 include_image_language: 'en,null'
             }
         });
@@ -243,10 +251,17 @@ export async function getMovieDetailsTMDB(id: string, type?: string) {
         const ratings = m.content_ratings?.results?.find((r: any) => r.iso_3166_1 === 'US');
         if (ratings) certification = ratings.rating;
 
+        // Fetch OMDB Ratings (TV shows usually have imdb_id in external_ids)
+        let omdbRatings = {};
+        if (m.external_ids && m.external_ids.imdb_id) {
+            omdbRatings = await getOMDBRatings(m.external_ids.imdb_id);
+        }
+
         const cast = m.credits?.cast?.slice(0, 5).map((c: any) => c.name) || [];
         const genres = m.genres?.map((g: any) => g.name) || [];
         return {
             ...formatMovie(m),
+            ...omdbRatings,
             cast,
             genres,
             logoUrl,

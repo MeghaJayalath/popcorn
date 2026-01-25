@@ -21,7 +21,7 @@ class HistoryStore {
         catch (e) {
             console.error("Failed to load history:", e);
         }
-        return { movies: {}, shows: {} };
+        return { movies: {}, shows: {}, favorites: {} };
     }
     save() {
         try {
@@ -72,6 +72,22 @@ class HistoryStore {
             delete this.data.shows[tmdbId];
         }
         this.save();
+    }
+    // Favorites Logic
+    addFavorite(movie) {
+        if (!this.data.favorites)
+            this.data.favorites = {};
+        this.data.favorites[movie.id.toString()] = movie;
+        this.save();
+    }
+    removeFavorite(tmdbId) {
+        if (this.data.favorites && this.data.favorites[tmdbId]) {
+            delete this.data.favorites[tmdbId];
+            this.save();
+        }
+    }
+    getFavorites() {
+        return this.data.favorites || {};
     }
 }
 exports.historyStore = new HistoryStore();

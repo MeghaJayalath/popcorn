@@ -225,6 +225,16 @@ electron_1.ipcMain.handle('get-watch-history', async () => {
 electron_1.ipcMain.handle('remove-watch-progress', async (event, tmdbId) => {
     store_1.historyStore.removeProgress(tmdbId);
 });
+// Favorites Handlers
+electron_1.ipcMain.handle('add-favorite', async (event, movie) => {
+    store_1.historyStore.addFavorite(movie);
+});
+electron_1.ipcMain.handle('remove-favorite', async (event, tmdbId) => {
+    store_1.historyStore.removeFavorite(tmdbId);
+});
+electron_1.ipcMain.handle('get-favorites', async () => {
+    return store_1.historyStore.getFavorites();
+});
 electron_1.app.on('ready', createWindow);
 electron_1.app.on('window-all-closed', () => {
     cleanup();

@@ -16,6 +16,9 @@ export interface ElectronAPI {
     updateWatchProgress: (tmdbId: string, progress: number, duration: number, season?: number, episode?: number, magnet?: string) => Promise<void>;
     removeWatchProgress: (tmdbId: string) => Promise<void>;
     getWatchHistory: () => Promise<any>;
+    addFavorite: (movie: any) => Promise<void>;
+    removeFavorite: (tmdbId: string) => Promise<void>;
+    getFavorites: () => Promise<any>;
     openExternal: (url: string) => Promise<void>;
 }
 

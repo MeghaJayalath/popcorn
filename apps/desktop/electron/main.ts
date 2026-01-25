@@ -270,6 +270,19 @@ ipcMain.handle('remove-watch-progress', async (event, tmdbId) => {
     historyStore.removeProgress(tmdbId);
 });
 
+// Favorites Handlers
+ipcMain.handle('add-favorite', async (event, movie) => {
+    historyStore.addFavorite(movie);
+});
+
+ipcMain.handle('remove-favorite', async (event, tmdbId) => {
+    historyStore.removeFavorite(tmdbId);
+});
+
+ipcMain.handle('get-favorites', async () => {
+    return historyStore.getFavorites();
+});
+
 app.on('ready', createWindow);
 
 app.on('window-all-closed', () => {

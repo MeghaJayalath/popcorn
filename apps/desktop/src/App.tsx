@@ -41,6 +41,10 @@ function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
+  // Favorites State
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [favorites, setFavorites] = useState<Movie[]>([]);
+
   // Splash Screen State
   const [showSplash, setShowSplash] = useState(true);
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -174,7 +178,8 @@ function App() {
       if (watchHistory.movies) {
         Object.entries(watchHistory.movies).forEach(([id, data]: [string, any]) => {
           const pct = (data.progress / data.duration) * 100;
-          if (pct > 1 && pct < 98) {
+          // Show if watched > 1 second and not finished (> 95%)
+          if (data.progress > 1 && pct < 95) {
             candidates.push({ id, ...data, type: 'movie' });
           }
         });
@@ -195,7 +200,8 @@ function App() {
 
           if (latestEp) {
             const pct = (latestEp.progress / latestEp.duration) * 100;
-            if (pct > 1 && pct < 98) {
+            // Show if watched > 1 second and not finished
+            if (latestEp.progress > 1 && pct < 95) {
               candidates.push({ id, ...latestEp, type: 'tv' });
             }
           }
@@ -460,53 +466,107 @@ function App() {
         }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             {/* Click Logo to reset */}
-            <div style={{ marginRight: '2rem', cursor: 'pointer' }} onClick={() => { setIsSearching(false); setSearchQuery(""); setIsPanelOpen(false); }}>
+            <div style={{ marginRight: '2rem', cursor: 'pointer' }} onClick={() => { setIsSearching(false); setShowFavorites(false); setSearchQuery(""); setIsPanelOpen(false); }}>
               <img src={logo} alt="Popcorn" style={{ height: '40px', objectFit: 'contain' }} />
             </div>
             {/* ... Links ... */}
             <div style={{ display: 'flex', gap: '20px', fontSize: '0.9rem' }}>
-              <span style={{ cursor: 'pointer' }} onClick={() => setIsSearching(false)}>Home</span>
+              <span style={{ cursor: 'pointer', opacity: (!isSearching && !showFavorites) ? 1 : 0.7 }} onClick={() => { setIsSearching(false); setShowFavorites(false); }}>Home</span>
               {/* <span>Movies</span>
               <span>TV Shows</span> */}
             </div>
           </div>
 
-          <form onSubmit={handleSearch} style={{ display: 'flex' }}>
-            <div style={{
-              display: 'flex', alignItems: 'center',
-              background: 'rgba(0,0,0,0.6)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: '4px',
-              padding: '6px 16px',
-              width: '240px',
-              transition: 'all 0.3s ease',
-            }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(181, 150, 110, 0.6)'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <form onSubmit={handleSearch} style={{ display: 'flex' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center',
+                background: 'rgba(255, 255, 255, 0.08)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '4px',
+                padding: '0 20px',
+                height: '42px',
+                width: '300px',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+              }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ opacity: 0.8, marginRight: '12px', color: '#fff' }}>
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search for Movie"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    background: 'transparent', border: 'none', color: 'white',
+                    width: '100%', outline: 'none', fontSize: '0.95rem',
+                    fontWeight: 400
+                  }}
+                />
+              </div>
+            </form>
+
+            {/* Favorites Button */}
+            <button
+              onClick={async () => {
+                if (showFavorites) {
+                  setShowFavorites(false);
+                } else {
+                  setShowFavorites(true);
+                  setIsSearching(false);
+                  setSearchQuery("");
+                  if (window.electronAPI) {
+                    try {
+                      const favs = await window.electronAPI.getFavorites();
+                      setFavorites(Object.values(favs));
+                    } catch (e) { console.error(e); }
+                  }
+                }
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(255, 255, 255, 0.08)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '4px',
+                padding: '0',
+                width: '42px', height: '42px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+                color: showFavorites ? 'var(--primary-color)' : 'white',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+              title="Favorites"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ opacity: 0.6, marginRight: '8px' }}>
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill={showFavorites ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
               </svg>
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  background: 'transparent', border: 'none', color: 'white',
-                  width: '100%', outline: 'none', fontSize: '0.9rem'
-                }}
-              />
-            </div>
-          </form>
+            </button>
+          </div>
         </div>
 
         {/* Side Panel */}
         <DetailsPanel
           movie={selectedMovie}
           isOpen={isPanelOpen}
-          onClose={() => setIsPanelOpen(false)}
+          onClose={async () => {
+            setIsPanelOpen(false);
+            if (showFavorites && window.electronAPI) {
+              try {
+                const favs = await window.electronAPI.getFavorites();
+                setFavorites(Object.values(favs));
+              } catch (e) { console.error(e); }
+            }
+          }}
           onStream={startStream}
           onWebStream={handleWebStream}
           watchHistory={watchHistory}
@@ -521,6 +581,36 @@ function App() {
                   <PosterCard key={movie.id} movie={movie} onPlay={() => handlePosterClick(movie)} progress={getProgress(movie)} />
                 )) : (
                   !loading && <p>No results found.</p>
+                )}
+              </div>
+            </div>
+            {/* Footer */}
+            <div style={{
+              padding: '0.5rem 4rem',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem',
+              opacity: 1, marginTop: '2rem', marginBottom: '2rem'
+            }}>
+              <img src={logo} alt="Popcorn" style={{ height: '24px' }} />
+              <span style={{ fontSize: '0.9rem', color: '#888' }}>powered by</span>
+              <img
+                src={meghaLogo}
+                alt="Megha"
+                style={{ height: '24px', cursor: 'pointer' }}
+                onClick={() => window.electronAPI?.openExternal('https://github.com/MeghaJayalath')}
+              />
+            </div>
+          </>
+        ) : showFavorites ? (
+          <>
+            <div style={{ paddingTop: '100px', paddingLeft: '4rem', paddingRight: '4rem', minHeight: '80vh' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ color: 'var(--primary-color)' }}>♥</span> Your Favorites
+              </h2>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', marginTop: '2rem', justifyContent: 'flex-start' }}>
+                {favorites.length > 0 ? favorites.map(movie => (
+                  <PosterCard key={movie.id} movie={movie} onPlay={() => handlePosterClick(movie)} progress={getProgress(movie)} />
+                )) : (
+                  <p style={{ color: '#777', fontSize: '1.1rem', marginTop: '2rem' }}>You haven't added any favorites yet.</p>
                 )}
               </div>
             </div>
@@ -596,7 +686,7 @@ function App() {
           </>
         )}
       </div>
-    </div>
+    </div >
   );
 }
 
