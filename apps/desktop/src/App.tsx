@@ -385,13 +385,16 @@ function App() {
     }
   };
 
+  if (isUpdateRequired) {
+    return <UpdateOverlay message={updateMessage} />;
+  }
+
+  if (isMaintenanceMode) {
+    return <MaintenanceOverlay message={maintenanceMessage} />;
+  }
+
   return (
     <div className="App">
-      {/* 1. Priority: Update Overlay */}
-      {isUpdateRequired && <UpdateOverlay message={updateMessage} />}
-
-      {/* 2. Priority: Maintenance Overlay */}
-      {isMaintenanceMode && <MaintenanceOverlay message={maintenanceMessage} />}
 
       {showSplash && !isUpdateRequired && !isMaintenanceMode && (
         <SplashScreen
@@ -604,9 +607,9 @@ function App() {
           <>
             <div style={{ paddingTop: '100px', paddingLeft: '4rem', paddingRight: '4rem', minHeight: '80vh' }}>
               <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ color: 'var(--primary-color)' }}>♥</span> Your Favorites
+                Your Favorites
               </h2>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', marginTop: '2rem', justifyContent: 'flex-start' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', marginTop: '2rem', justifyContent: favorites.length > 0 ? 'flex-start' : 'center', alignItems: favorites.length > 0 ? 'flex-start' : 'center', minHeight: favorites.length > 0 ? 'auto' : '50vh' }}>
                 {favorites.length > 0 ? favorites.map(movie => (
                   <PosterCard key={movie.id} movie={movie} onPlay={() => handlePosterClick(movie)} progress={getProgress(movie)} />
                 )) : (
