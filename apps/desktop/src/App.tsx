@@ -50,7 +50,7 @@ function App() {
   const [dataLoaded, setDataLoaded] = useState(false);
 
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
-  const [webStreamParams, setWebStreamParams] = useState<{ tmdbId: string, season?: number, episode?: number, provider?: string } | null>(null);
+  const [webStreamParams, setWebStreamParams] = useState<{ tmdbId: string, season?: number, episode?: number, provider?: 'vidking' | 'vidsrc' } | null>(null);
   const [playbackParams, setPlaybackParams] = useState<{ tmdbId: string, season?: number, episode?: number, magnet?: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -371,8 +371,8 @@ function App() {
     }
   };
 
-  const handleWebStream = (tmdbId: string, season?: number, episode?: number) => {
-    setWebStreamParams({ tmdbId, season, episode });
+  const handleWebStream = (tmdbId: string, season?: number, episode?: number, provider: 'vidking' | 'vidsrc' = 'vidking') => {
+    setWebStreamParams({ tmdbId, season, episode, provider });
     // Keep panel open underneath
   };
 
@@ -440,9 +440,9 @@ function App() {
         <VideoPlayer
           url={streamUrl}
           onClose={handleClosePlayer}
-          onWebStream={(id, s, e) => {
+          onWebStream={(id, s, e, p) => {
             handleClosePlayer(); // Close current player first
-            setWebStreamParams({ tmdbId: id, season: s, episode: e });
+            setWebStreamParams({ tmdbId: id, season: s, episode: e, provider: p });
           }}
           tmdbId={playbackParams?.tmdbId}
           season={playbackParams?.season}
@@ -456,6 +456,7 @@ function App() {
           tmdbId={webStreamParams.tmdbId}
           season={webStreamParams.season}
           episode={webStreamParams.episode}
+          provider={webStreamParams.provider}
           onClose={handleWebPlayerClose}
         />
       )}

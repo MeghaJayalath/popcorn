@@ -3,7 +3,7 @@ import React, { useRef, useEffect } from 'react';
 interface VideoPlayerProps {
     url: string;
     onClose: () => void;
-    onWebStream?: (tmdbId: string, season?: number, episode?: number) => void;
+    onWebStream?: (tmdbId: string, season?: number, episode?: number, provider?: 'vidking' | 'vidsrc') => void;
     tmdbId?: string;
     season?: number;
     episode?: number;
@@ -179,7 +179,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onClose, onWebStream, tm
                             <button
                                 onClick={() => {
                                     if (onWebStream && tmdbId) {
-                                        onWebStream(tmdbId, season, episode);
+                                        onWebStream(tmdbId, season, episode, 'vidking');
                                         setShowOptions(false);
                                     } else {
                                         alert("Web Stream not available for this title.");
@@ -194,6 +194,25 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onClose, onWebStream, tm
                                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                             >
                                 Play via Vidking
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (onWebStream && tmdbId) {
+                                        onWebStream(tmdbId, season, episode, 'vidsrc');
+                                        setShowOptions(false);
+                                    } else {
+                                        alert("Web Stream not available for this title.");
+                                    }
+                                }}
+                                style={{
+                                    display: 'block', width: '100%', textAlign: 'left',
+                                    padding: '10px 12px', background: 'transparent', color: '#eee',
+                                    cursor: 'pointer', fontSize: '0.9rem'
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = '#333'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            >
+                                Play via VidSrc
                             </button>
                         </div>
                     )}

@@ -26,7 +26,7 @@ interface DetailsPanelProps {
     isOpen: boolean;
     onClose: () => void;
     onStream: (magnet: string, season?: number, episode?: number) => void;
-    onWebStream?: (tmdbId: string, season?: number, episode?: number) => void;
+    onWebStream?: (tmdbId: string, season?: number, episode?: number, provider?: 'vidking' | 'vidsrc') => void;
     watchHistory?: any;
 }
 
@@ -203,28 +203,28 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
 
         async function fetchData() {
             if (!window.electronAPI || !movie) return;
-            try {
-                await new Promise(r => setTimeout(r, 600));
+
+            // 1. Fetch Details Immediately
+            const detailsPromise = (window.electronAPI as any).getMovieDetails(movie.id, movie.type);
+
+            detailsPromise.then((meta: any) => {
                 if (!active || !isOpen) return;
-
-                // Basic Fetch
-                const detailsPromise = (window.electronAPI as any).getMovieDetails(movie.id, movie.type);
-
-                // Conditional Torrent Fetch
-                const torrentPromise = (movie.type !== 'tv')
-                    ? window.electronAPI.getTorrents(movie.title, movie.year)
-                    : Promise.resolve([]);
-
-                const [meta, torrentList] = await Promise.all([detailsPromise, torrentPromise]);
-
-                if (active) {
-                    if (meta && !meta.error) setDetails(meta);
-                    if (torrentList) setTorrents(torrentList);
+                if (meta && !meta.error) {
+                    setDetails(meta);
+                    setIsLoading(false); // Show UI as soon as details are ready
                 }
-            } catch (e) {
-                console.error("Data fetch failed", e);
-            } finally {
-                if (active) setIsLoading(false);
+            }).catch((e: any) => console.error("Details fetch failed", e));
+
+            // 2. Fetch Torrents in Background (Movies Only)
+            if (movie.type !== 'tv') {
+                window.electronAPI.getTorrents(movie.title, movie.year)
+                    .then((torrentList: any[]) => {
+                        if (!active || !isOpen) return;
+                        if (torrentList) setTorrents(torrentList);
+                    })
+                    .catch((e: any) => console.error("Torrent fetch failed", e));
+            } else {
+                // For TV, we don't fetch torrents at root level anyway, so nothing to do
             }
         }
         fetchData();
@@ -310,6 +310,8 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                     transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
                     transition: 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1)',
                     overflowY: 'auto',
+                    overflowX: 'hidden', // Prevent horizontal scroll
+                    boxSizing: 'border-box',
                     boxShadow: '-8px 0 25px rgba(0,0,0,0.7)'
                 }}>
                 {/* Close Button */}
@@ -348,7 +350,13 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                     </svg>
                 </button>
 
-                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                <style>{`
+                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                    @keyframes popIn { 
+                        0% { opacity: 0; transform: scale(0.96) translateY(12px); } 
+                        100% { opacity: 1; transform: scale(1) translateY(0); } 
+                    }
+                `}</style>
 
                 {isLoading ? (
                     <div style={{
@@ -370,7 +378,9 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                             height: '38vh',
                             width: '100%',
                             overflow: 'hidden', // Fixes gradient and video containment
-                            backgroundColor: '#000' // Gap fix
+                            backgroundColor: '#000', // Gap fix
+                            animation: 'popIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                            opacity: 0 // Start hidden
                         }}>
                             <div style={{ position: 'absolute', inset: 0 }}>
                                 {/* Parallax Wrapper */}
@@ -447,7 +457,13 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                         </div>
 
                         {/* Info Section */}
-                        <div style={{ padding: '0 30px 40px', color: '#ccc' }}>
+                        <div style={{
+                            padding: '0 30px 40px',
+                            color: '#ccc',
+                            animation: 'popIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                            animationDelay: '0.1s',
+                            opacity: 0 // Start hidden
+                        }}>
                             <p style={{
                                 fontSize: '1rem', lineHeight: '1.5', color: 'white',
                                 marginBottom: '1.5rem', marginTop: '0'
@@ -475,7 +491,12 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                             </div>
 
                             {/* Streams / Episodes Section */}
-                            <div style={{ marginTop: '2rem' }}>
+                            <div style={{
+                                marginTop: '2rem',
+                                animation: 'popIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                                animationDelay: '0.2s',
+                                opacity: 0 // Start hidden
+                            }}>
                                 {movie.type === 'tv' ? (
                                     <>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -619,29 +640,46 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                                                                     <h5 style={{ color: '#eee', margin: 0, fontSize: '0.9rem' }}>Select Source:</h5>
                                                                 </div>
-                                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
+                                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px', animation: 'popIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards' }}>
                                                                     {onWebStream && (
-                                                                        <button
-                                                                            onClick={() => onWebStream(movie.id, selectedSeason, ep.episode_number)}
-                                                                            style={{
-                                                                                background: '#333', border: '1px solid #444', borderRadius: '4px',
-                                                                                padding: '10px', textAlign: 'left', cursor: 'pointer', width: '100%',
-                                                                                transition: 'background 0.2s', position: 'relative', overflow: 'hidden'
-                                                                            }}
-                                                                            onMouseEnter={e => e.currentTarget.style.background = '#444'}
-                                                                            onMouseLeave={e => e.currentTarget.style.background = '#333'}
-                                                                        >
-                                                                            <div style={{ fontWeight: 'bold', color: '#8A2BE2', marginBottom: '4px' }}>
-                                                                                Play via Vidking
-                                                                            </div>
-                                                                            <div style={{ fontSize: '0.8rem', color: '#aaa' }}>(fast stream)</div>
-                                                                            {getEpisodeProgress(selectedSeason, ep.episode_number, 'vidking') > 0 && (
-                                                                                <div style={{
-                                                                                    position: 'absolute', bottom: 0, left: 0, height: '4px',
-                                                                                    background: 'var(--primary-color)', width: `${getEpisodeProgress(selectedSeason, ep.episode_number, 'vidking')}%`
-                                                                                }} />
-                                                                            )}
-                                                                        </button>
+                                                                        <>
+                                                                            <button
+                                                                                onClick={() => onWebStream(movie.id, selectedSeason, ep.episode_number, 'vidking')}
+                                                                                style={{
+                                                                                    background: '#333', border: '1px solid #444', borderRadius: '4px',
+                                                                                    padding: '10px', textAlign: 'left', cursor: 'pointer', width: '100%',
+                                                                                    transition: 'background 0.2s', position: 'relative', overflow: 'hidden'
+                                                                                }}
+                                                                                onMouseEnter={e => e.currentTarget.style.background = '#444'}
+                                                                                onMouseLeave={e => e.currentTarget.style.background = '#333'}
+                                                                            >
+                                                                                <div style={{ fontWeight: 'bold', color: '#8A2BE2', marginBottom: '4px' }}>
+                                                                                    Play via VidKing
+                                                                                </div>
+                                                                                <div style={{ fontSize: '0.8rem', color: '#aaa' }}>(fast stream)</div>
+                                                                                {getEpisodeProgress(selectedSeason, ep.episode_number, 'vidking') > 0 && (
+                                                                                    <div style={{
+                                                                                        position: 'absolute', bottom: 0, left: 0, height: '4px',
+                                                                                        background: 'var(--primary-color)', width: `${getEpisodeProgress(selectedSeason, ep.episode_number, 'vidking')}%`
+                                                                                    }} />
+                                                                                )}
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => onWebStream(movie.id, selectedSeason, ep.episode_number, 'vidsrc')}
+                                                                                style={{
+                                                                                    background: '#333', border: '1px solid #444', borderRadius: '4px',
+                                                                                    padding: '10px', textAlign: 'left', cursor: 'pointer', width: '100%',
+                                                                                    transition: 'background 0.2s', position: 'relative', overflow: 'hidden'
+                                                                                }}
+                                                                                onMouseEnter={e => e.currentTarget.style.background = '#444'}
+                                                                                onMouseLeave={e => e.currentTarget.style.background = '#333'}
+                                                                            >
+                                                                                <div style={{ fontWeight: 'bold', color: '#2b8ae2', marginBottom: '4px' }}>
+                                                                                    Play via VidSrc
+                                                                                </div>
+                                                                                <div style={{ fontSize: '0.8rem', color: '#aaa' }}>(cloud sources)</div>
+                                                                            </button>
+                                                                        </>
                                                                     )}
                                                                     {episodeTorrents.map((t, i) => (
                                                                         <button
@@ -701,30 +739,48 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ movie, isOpen, onClose, onS
                                             </div>
                                         ) : (
                                             (torrents.length > 0 || (!movie.inCinemas && onWebStream)) ? (
-                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px', animation: 'popIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards' }}>
                                                     {onWebStream && !movie.inCinemas && (
-                                                        <button
-                                                            onClick={() => onWebStream(movie.id)}
-                                                            style={{
-                                                                background: '#333', border: '1px solid #444', borderRadius: '4px',
-                                                                padding: '10px', textAlign: 'left', cursor: 'pointer',
-                                                                transition: 'background 0.2s',
-                                                                minWidth: '140px', position: 'relative', overflow: 'hidden'
-                                                            }}
-                                                            onMouseEnter={e => e.currentTarget.style.background = '#444'}
-                                                            onMouseLeave={e => e.currentTarget.style.background = '#333'}
-                                                        >
-                                                            <div style={{ fontWeight: 'bold', color: '#8A2BE2', marginBottom: '4px' }}>
-                                                                Play via Vidking
-                                                            </div>
-                                                            <div style={{ fontSize: '0.8rem', color: '#aaa' }}>(fast stream)</div>
-                                                            {getMovieProgress('vidking') > 0 && (
-                                                                <div style={{
-                                                                    position: 'absolute', bottom: 0, left: 0, height: '4px',
-                                                                    background: 'var(--primary-color)', width: `${getMovieProgress('vidking')}%`
-                                                                }} />
-                                                            )}
-                                                        </button>
+                                                        <>
+                                                            <button
+                                                                onClick={() => onWebStream(movie.id, undefined, undefined, 'vidking')}
+                                                                style={{
+                                                                    background: '#333', border: '1px solid #444', borderRadius: '4px',
+                                                                    padding: '10px', textAlign: 'left', cursor: 'pointer',
+                                                                    transition: 'background 0.2s',
+                                                                    minWidth: '140px', position: 'relative', overflow: 'hidden'
+                                                                }}
+                                                                onMouseEnter={e => e.currentTarget.style.background = '#444'}
+                                                                onMouseLeave={e => e.currentTarget.style.background = '#333'}
+                                                            >
+                                                                <div style={{ fontWeight: 'bold', color: '#8A2BE2', marginBottom: '4px' }}>
+                                                                    Play via VidKing
+                                                                </div>
+                                                                <div style={{ fontSize: '0.8rem', color: '#aaa' }}>(fast stream)</div>
+                                                                {getMovieProgress('vidking') > 0 && (
+                                                                    <div style={{
+                                                                        position: 'absolute', bottom: 0, left: 0, height: '4px',
+                                                                        background: 'var(--primary-color)', width: `${getMovieProgress('vidking')}%`
+                                                                    }} />
+                                                                )}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => onWebStream(movie.id, undefined, undefined, 'vidsrc')}
+                                                                style={{
+                                                                    background: '#333', border: '1px solid #444', borderRadius: '4px',
+                                                                    padding: '10px', textAlign: 'left', cursor: 'pointer',
+                                                                    transition: 'background 0.2s',
+                                                                    minWidth: '140px', position: 'relative', overflow: 'hidden'
+                                                                }}
+                                                                onMouseEnter={e => e.currentTarget.style.background = '#444'}
+                                                                onMouseLeave={e => e.currentTarget.style.background = '#333'}
+                                                            >
+                                                                <div style={{ fontWeight: 'bold', color: '#2b8ae2', marginBottom: '4px' }}>
+                                                                    Play via VidSrc
+                                                                </div>
+                                                                <div style={{ fontSize: '0.8rem', color: '#aaa' }}>(cloud sources)</div>
+                                                            </button>
+                                                        </>
                                                     )}
                                                     {torrents.map((t: any, i: number) => (
                                                         <button

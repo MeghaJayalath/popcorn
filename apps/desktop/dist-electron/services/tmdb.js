@@ -299,7 +299,18 @@ async function getMovieDetailsTMDB(id, type) {
             logoUrl,
             runtime: m.episode_run_time?.[0] ? `${m.episode_run_time[0]}m` : '',
             seasons: m.seasons || [],
-            certification
+            certification,
+            // Override image with latest season poster if available
+            image: (() => {
+                if (m.seasons && m.seasons.length > 0) {
+                    const sorted = [...m.seasons].sort((a, b) => b.season_number - a.season_number);
+                    const latest = sorted.find((s) => s.poster_path && s.season_number > 0)
+                        || sorted.find((s) => s.poster_path);
+                    if (latest)
+                        return `${IMAGE_BASE}${latest.poster_path}`;
+                }
+                return m.poster_path ? `${IMAGE_BASE}${m.poster_path}` : null;
+            })()
         };
     }
     catch (err2) {

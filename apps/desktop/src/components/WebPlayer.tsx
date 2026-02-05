@@ -5,9 +5,10 @@ interface WebPlayerProps {
     season?: number;
     episode?: number;
     onClose: () => void;
+    provider?: 'vidking' | 'vidsrc';
 }
 
-const WebPlayer: React.FC<WebPlayerProps> = ({ tmdbId, season, episode, onClose }) => {
+const WebPlayer: React.FC<WebPlayerProps> = ({ tmdbId, season, episode, onClose, provider = 'vidking' }) => {
     // Listen for Vidking Progress Events
     React.useEffect(() => {
         let lastUpdate = 0;
@@ -60,12 +61,23 @@ const WebPlayer: React.FC<WebPlayerProps> = ({ tmdbId, season, episode, onClose 
 
     let src = '';
 
-    if (season && episode) {
-        // TV Show: https://vidking.net/embed/tv/{tmdb_id}/{season}/{episode}?color={hex}
-        src = `https://vidking.net/embed/tv/${tmdbId}/${season}/${episode}?color=${primaryColor}`;
+    if (provider === 'vidsrc') {
+        if (season && episode) {
+            // TV Show: https://vidsrc.xyz/embed/tv?tmdb={tmdb_id}&season={season}&episode={episode}
+            src = `https://vidsrc.xyz/embed/tv?tmdb=${tmdbId}&season=${season}&episode=${episode}`;
+        } else {
+            // Movie: https://vidsrc.xyz/embed/movie?tmdb={tmdb_id}
+            src = `https://vidsrc.xyz/embed/movie?tmdb=${tmdbId}`;
+        }
     } else {
-        // Movie: https://vidking.net/embed/movie/{tmdb_id}?color={hex}
-        src = `https://vidking.net/embed/movie/${tmdbId}?color=${primaryColor}`;
+        // Default: VidKing
+        if (season && episode) {
+            // TV Show: https://vidking.net/embed/tv/{tmdb_id}/{season}/{episode}?color={hex}
+            src = `https://vidking.net/embed/tv/${tmdbId}/${season}/${episode}?color=${primaryColor}`;
+        } else {
+            // Movie: https://vidking.net/embed/movie/{tmdb_id}?color={hex}
+            src = `https://vidking.net/embed/movie/${tmdbId}?color=${primaryColor}`;
+        }
     }
 
     return (
