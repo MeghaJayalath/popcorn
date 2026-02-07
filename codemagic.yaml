@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 120
     instance_type: mac_mini_m1
     environment:
-      flutter: stable
+      flutter: 3.38.9
       groups:
         - google_play # keystore credentials
     scripts:
@@ -26,7 +26,7 @@ workflows:
     max_build_duration: 120
     instance_type: windows_x2
     environment:
-      flutter: stable
+      flutter: 3.38.9
     scripts:
       - name: Get dependencies
         script: |
@@ -41,7 +41,12 @@ workflows:
 
   ios-workflow:
     name: iOS Release
-    # ... (rest of your env settings)
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+    environment:
+      flutter: 3.38.9
+      xcode: latest
+      cocoapods: default
     scripts:
       - name: Get dependencies
         script: |
@@ -64,7 +69,7 @@ workflows:
     max_build_duration: 120
     instance_type: mac_mini_m1
     environment:
-      flutter: stable
+      flutter: 3.38.9
       cocoapods: default
     scripts:
       - name: Get dependencies
