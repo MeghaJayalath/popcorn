@@ -38,3 +38,50 @@ workflows:
           flutter build windows --release
     artifacts:
       - apps/flutter_client/build/windows/runner/Release/*.exe
+
+  ios-workflow:
+    name: iOS Release
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Get dependencies
+        script: |
+          cd apps/flutter_client
+          flutter pub get
+      - name: Install Pods
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+      - name: Build iOS Release
+        script: |
+          cd apps/flutter_client
+          flutter build ios --release --no-codesign
+    artifacts:
+      - apps/flutter_client/build/ios/iphoneos/*.app
+      - apps/flutter_client/flutter_drive.log
+
+  macos-workflow:
+    name: macOS Release
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+    environment:
+      flutter: stable
+      cocoapods: default
+    scripts:
+      - name: Get dependencies
+        script: |
+          cd apps/flutter_client
+          flutter pub get
+      - name: Install Pods
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+      - name: Build macOS Release
+        script: |
+          cd apps/flutter_client
+          flutter build macos --release
+    artifacts:
+      - apps/flutter_client/build/macos/Build/Products/Release/*.app
+      - apps/flutter_client/flutter_drive.log
