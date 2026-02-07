@@ -1,0 +1,40 @@
+workflows:
+  android-workflow:
+    name: Android Release
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+    environment:
+      flutter: stable
+      groups:
+        - google_play # keystore credentials
+    scripts:
+      - name: Get dependencies
+        script: |
+          cd apps/flutter_client
+          flutter pub get
+      - name: Build Android Release
+        script: |
+          cd apps/flutter_client
+          flutter build apk --release
+    artifacts:
+      - apps/flutter_client/build/**/outputs/**/*.apk
+      - apps/flutter_client/build/**/outputs/**/mapping.txt
+      - apps/flutter_client/flutter_drive.log
+
+  windows-workflow:
+    name: Windows Release
+    max_build_duration: 120
+    instance_type: windows_x86_64
+    environment:
+      flutter: stable
+    scripts:
+      - name: Get dependencies
+        script: |
+          cd apps/flutter_client
+          flutter pub get
+      - name: Build Windows Release
+        script: |
+          cd apps/flutter_client
+          flutter build windows --release
+    artifacts:
+      - apps/flutter_client/build/windows/runner/Release/*.exe
